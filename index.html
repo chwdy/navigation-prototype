@@ -195,7 +195,7 @@
 
     /* ── VERTICAL PROGRESS BAR ── */
     #progress-bar-panel {
-      width: 36px;
+      width: 44px;
       background: var(--bg-progress);
       border-left: 1px solid var(--border);
       display: flex;
@@ -206,17 +206,16 @@
       transition: background 0.3s;
     }
 
-    /* Exit label — full panel width, big enough to read clearly */
+    /* Exit label — same size as the distance readout (22px DM Mono) */
     #progress-exit-label {
       width: 100%;
-      font-size: 11px;
+      font-size: 22px;
       font-family: 'DM Mono', monospace;
       font-weight: 500;
       color: #4ade80;
       text-align: center;
       line-height: 1;
       flex-shrink: 0;
-      letter-spacing: 0.04em;
     }
 
     #progress-track-wrap {
@@ -470,13 +469,12 @@
         instruction: 'Move right',
         distance: '500 ft',
         turnIconType: 'lane-right',
-        bannerVisible: true,
-        bannerText: '▶  Move to right lane',
+        bannerVisible: false,
         etaMin: '3 min',
         scene: 'highway',
         carLane: 1,
         routePath: 'curving-right',
-        showExit: true,
+        showExit: false,
         progressPct: 0.72,  // ~500 ft left of 1.5 mi
       },
       {
@@ -604,33 +602,18 @@
     }
 
     function drawLaneRouteCurve(fromX, toX, laneW, carY, h) {
-      // Three straight segments: up → diagonal right → up
-      const seg1EndY = carY * 0.60;   // end of first straight-up section
-      const seg2EndY = carY * 0.32;   // end of diagonal (arrives in right lane)
+      // Single connected path for all three segments — no overlapping joints
+      const seg1EndY = carY * 0.60;
+      const seg2EndY = carY * 0.32;
       const fillW = laneW * 0.82;
-
-      // Segment 1: straight up in current lane
-      add(svgEl('rect', {
-        x: fromX - fillW/2, y: seg1EndY,
-        width: fillW, height: carY - seg1EndY,
-        fill: '#00C8A0', opacity: 0.28, rx: 4,
-      }));
-
-      // Segment 2: diagonal crossing to right lane
       add(svgEl('path', {
-        d: `M ${fromX} ${seg1EndY} L ${toX} ${seg2EndY}`,
+        d: `M ${fromX} ${carY} L ${fromX} ${seg1EndY} L ${toX} ${seg2EndY} L ${toX} 0`,
         stroke: '#00C8A0',
         'stroke-width': fillW,
         'stroke-opacity': 0.28,
         fill: 'none',
         'stroke-linecap': 'butt',
-      }));
-
-      // Segment 3: straight up in right lane
-      add(svgEl('rect', {
-        x: toX - fillW/2, y: 0,
-        width: fillW, height: seg2EndY,
-        fill: '#00C8A0', opacity: 0.28, rx: 4,
+        'stroke-linejoin': 'miter',
       }));
     }
 
