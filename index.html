@@ -16,67 +16,59 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ══ THEME TOKENS ══ */
     :root {
       --accent: #00C8A0;
-      --amber: #F5A623;
+      --amber:  #F5A623;
       --danger: #E84040;
     }
 
     [data-theme="dark"] {
-      --bg-body:        #0a0c10;
-      --bg-panel:       #1A1D24;
-      --bg-map:         #0D1018;
-      --bg-road:        #1a1e28;
-      --bg-progress:    #141720;
-      --bg-menu:        #22262f;
-      --border:         rgba(255,255,255,0.08);
-      --border-strong:  rgba(255,255,255,0.15);
-      --text-primary:   #ffffff;
-      --text-secondary: rgba(255,255,255,0.5);
-      --text-muted:     rgba(255,255,255,0.28);
-      --lane-line:      rgba(255,255,255,0.65);
-      --road-shoulder:  rgba(255,255,255,0.7);
-      --offroad:        #0D1018;
-      --switcher-bg:    rgba(255,255,255,0.04);
-      --switcher-border:rgba(255,255,255,0.08);
+      --bg-body:       #0a0c10;
+      --bg-panel:      #1A1D24;
+      --bg-map:        #0D1018;
+      --bg-road:       #1c2030;
+      --bg-progress:   #141720;
+      --bg-menu:       #22262f;
+      --border:        rgba(255,255,255,0.07);
+      --border-strong: rgba(255,255,255,0.13);
+      --text-primary:  #ffffff;
+      --text-dim:      rgba(255,255,255,0.22);   /* non-essential elements */
+      --lane-line:     rgba(255,255,255,0.55);
+      --offroad:       #0a0d14;
+      --switcher-bg:   rgba(255,255,255,0.04);
+      --switcher-bd:   rgba(255,255,255,0.08);
     }
 
     [data-theme="light"] {
-      --bg-body:        #e8eaee;
-      --bg-panel:       #ffffff;
-      --bg-map:         #c8cdd8;
-      --bg-road:        #9ba3b4;
-      --bg-progress:    #dde0e8;
-      --bg-menu:        #ffffff;
-      --border:         rgba(0,0,0,0.08);
-      --border-strong:  rgba(0,0,0,0.15);
-      --text-primary:   #1a1d24;
-      --text-secondary: rgba(0,0,0,0.5);
-      --text-muted:     rgba(0,0,0,0.35);
-      --lane-line:      rgba(255,255,255,0.85);
-      --road-shoulder:  rgba(255,255,255,0.9);
-      --offroad:        #b0b8c8;
-      --switcher-bg:    rgba(0,0,0,0.04);
-      --switcher-border:rgba(0,0,0,0.1);
+      --bg-body:       #dde1e8;
+      --bg-panel:      #ffffff;
+      --bg-map:        #bfc5d0;
+      --bg-road:       #8f99aa;
+      --bg-progress:   #d5dae3;
+      --bg-menu:       #ffffff;
+      --border:        rgba(0,0,0,0.07);
+      --border-strong: rgba(0,0,0,0.13);
+      --text-primary:  #141720;
+      --text-dim:      rgba(0,0,0,0.22);
+      --lane-line:     rgba(255,255,255,0.8);
+      --offroad:       #aab2c0;
+      --switcher-bg:   rgba(0,0,0,0.04);
+      --switcher-bd:   rgba(0,0,0,0.08);
     }
 
     body {
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
       min-height: 100vh;
       background: var(--bg-body);
       font-family: 'Inter', sans-serif;
-      padding: 24px 16px 16px;
-      gap: 20px;
+      padding: 24px 16px 20px;
+      gap: 18px;
       transition: background 0.3s;
     }
 
-    /* ══════════════════════════════════════════
-       PHONE FRAME
-    ══════════════════════════════════════════ */
+    /* ══ PHONE ══ */
     #phone {
       width: 375px;
       height: 680px;
@@ -85,95 +77,91 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 0 0 1px var(--border), 0 24px 80px rgba(0,0,0,0.5);
-      position: relative;
+      box-shadow: 0 0 0 1px var(--border), 0 20px 70px rgba(0,0,0,0.5);
       flex-shrink: 0;
-      transition: background 0.3s, box-shadow 0.3s;
+      transition: background 0.3s;
     }
 
-    /* ── NAV PANEL (30% = 204px) ── */
+    /* ── NAV PANEL  30% = 204px ── */
     #nav-panel {
       height: 30%;
       background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 18px 22px 14px;
-      border-bottom: 1px solid var(--border);
-      gap: 6px;
+      padding: 16px 22px 12px;
+      gap: 0;
       flex-shrink: 0;
       position: relative;
-      transition: background 0.3s, border-color 0.3s;
+      transition: background 0.3s;
     }
 
-    #nav-top-row {
+    /* ---- primary row: icon + command ---- */
+    #nav-primary {
       display: flex;
       align-items: center;
       gap: 14px;
+      flex: 1;
     }
 
-    #turn-icon { width: 56px; height: 56px; flex-shrink: 0; }
+    #turn-icon { width: 60px; height: 60px; flex-shrink: 0; }
 
-    #nav-text { flex: 1; min-width: 0; }
+    #command-block { flex: 1; min-width: 0; }
 
+    /* THE essential instruction — huge, impossible to miss */
     #instruction-text {
-      font-size: 22px;
+      font-size: 38px;
       font-weight: 700;
-      line-height: 1.2;
+      line-height: 1.1;
       color: var(--text-primary);
+      letter-spacing: -0.5px;
       transition: color 0.3s;
     }
 
+    /* Distance tag — large mono, accent */
     #distance-readout {
       font-family: 'DM Mono', monospace;
-      font-size: 15px;
+      font-size: 22px;
+      font-weight: 500;
       color: var(--accent);
       margin-top: 4px;
     }
 
-    #nav-bottom-row {
+    /* ---- secondary row: all non-essential, heavily muted ---- */
+    #nav-secondary {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 6px;
+      margin-top: 8px;
+      padding-top: 8px;
       border-top: 1px solid var(--border);
-      margin-top: 2px;
-    }
-
-    #eta-info {
-      font-size: 12px;
-      color: var(--text-secondary);
-      transition: color 0.3s;
-    }
-    #eta-info strong { color: var(--text-primary); font-weight: 600; }
-
-    #route-summary {
-      font-size: 12px;
-      color: var(--text-muted);
+      color: var(--text-dim);
+      font-size: 11px;
       transition: color 0.3s;
     }
 
-    /* Lane change banner */
+    /* Lane-change alert strip — amber, important */
     #lane-banner {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      background: rgba(245,166,35,0.16);
-      border-top: 1px solid rgba(245,166,35,0.5);
+      background: rgba(245,166,35,0.14);
+      border-top: 1.5px solid rgba(245,166,35,0.45);
       color: var(--amber);
-      font-size: 12px;
-      font-weight: 600;
-      padding: 5px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      padding: 6px 18px;
       display: none;
-      animation: slideUp 0.3s ease-out;
+      animation: slideUp 0.25s ease-out;
     }
 
     /* ── MAP SECTION ── */
     #map-section {
       flex: 1;
       display: flex;
-      position: relative;
       overflow: hidden;
       background: var(--bg-map);
       transition: background 0.3s;
@@ -185,11 +173,7 @@
       overflow: hidden;
     }
 
-    #scene-svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+    #scene-svg { width: 100%; height: 100%; display: block; }
 
     #exit-sign {
       position: absolute;
@@ -197,51 +181,49 @@
       left: 50%;
       transform: translateX(-50%);
       background: #1A6B3A;
-      border: 2px solid #fff;
+      border: 2px solid rgba(255,255,255,0.9);
       color: #fff;
       border-radius: 6px;
-      padding: 4px 14px;
+      padding: 3px 14px;
       font-family: 'DM Mono', monospace;
       text-align: center;
       display: none;
       z-index: 10;
     }
-    #exit-sign .exit-label { font-size: 10px; display: block; opacity: 0.8; }
-    #exit-sign .exit-number { font-size: 18px; font-weight: 500; display: block; }
+    #exit-sign .exit-label  { font-size: 9px;  display: block; opacity: 0.75; }
+    #exit-sign .exit-number { font-size: 19px; font-weight: 500; display: block; }
 
     /* ── VERTICAL PROGRESS BAR ── */
     #progress-bar-panel {
-      width: 52px;
+      width: 44px;
       background: var(--bg-progress);
       border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 14px 0 14px;
+      padding: 14px 0;
       flex-shrink: 0;
-      transition: background 0.3s, border-color 0.3s;
+      transition: background 0.3s;
     }
 
+    /* exit label — small but readable */
     #progress-exit-label {
-      font-size: 9px;
+      font-size: 8px;
       font-family: 'DM Mono', monospace;
-      background: #1A6B3A22;
-      border: 1px solid #1A6B3A88;
-      border-radius: 3px;
-      padding: 2px 5px;
-      text-align: center;
-      z-index: 2;
-      flex-shrink: 0;
       color: #4ade80;
+      background: rgba(26,107,58,0.2);
+      border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 3px;
+      padding: 2px 4px;
+      flex-shrink: 0;
     }
 
     #progress-track-wrap {
       flex: 1;
       display: flex;
-      flex-direction: column;
       align-items: center;
       width: 100%;
-      padding: 8px 0;
+      padding: 6px 0;
     }
 
     #progress-track {
@@ -250,16 +232,15 @@
       background: var(--border-strong);
       border-radius: 2px;
       position: relative;
+      margin: 0 auto;
       overflow: visible;
       transition: background 0.3s;
     }
 
     #progress-fill {
       position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: linear-gradient(to top, var(--accent), rgba(0,200,160,0.25));
+      bottom: 0; left: 0; width: 100%;
+      background: linear-gradient(to top, var(--accent), rgba(0,200,160,0.2));
       border-radius: 2px;
       transition: height 0.5s ease-out;
     }
@@ -268,28 +249,27 @@
       position: absolute;
       left: 50%;
       transform: translate(-50%, 50%);
-      width: 12px;
-      height: 12px;
+      width: 11px; height: 11px;
       background: #fff;
       border: 2.5px solid var(--accent);
       border-radius: 50%;
-      box-shadow: 0 0 8px rgba(0,200,160,0.6);
+      box-shadow: 0 0 7px rgba(0,200,160,0.7);
       transition: bottom 0.5s ease-out;
     }
 
+    /* "YOU" label — muted */
     #progress-you-label {
-      font-size: 8px;
-      color: var(--text-muted);
-      text-align: center;
-      margin-top: 6px;
+      font-size: 7px;
+      color: var(--text-dim);
       font-family: 'DM Mono', monospace;
+      margin-top: 5px;
       flex-shrink: 0;
       transition: color 0.3s;
     }
 
-    /* ── BOTTOM ACTION BAR ── */
+    /* ── BOTTOM ACTION BAR — all non-essential, muted ── */
     #bottom-bar {
-      height: 52px;
+      height: 50px;
       background: var(--bg-panel);
       border-top: 1px solid var(--border);
       display: flex;
@@ -297,75 +277,53 @@
       justify-content: space-between;
       padding: 0 20px;
       flex-shrink: 0;
-      transition: background 0.3s, border-color 0.3s;
+      transition: background 0.3s;
       position: relative;
     }
 
-    #cancel-btn {
-      width: 32px;
-      height: 32px;
+    /* Cancel and menu — greyed out, not distracting */
+    #cancel-btn, #menu-btn {
+      width: 30px; height: 30px;
       border-radius: 50%;
-      background: rgba(232,64,64,0.12);
-      border: 1px solid rgba(232,64,64,0.3);
-      color: var(--danger);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       cursor: pointer;
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1;
-      transition: background 0.2s;
       user-select: none;
+      transition: background 0.2s;
+      color: var(--text-dim);
+      background: transparent;
+      border: 1px solid var(--border);
+      font-size: 13px;
     }
-    #cancel-btn:hover { background: rgba(232,64,64,0.22); }
+    #cancel-btn:hover { background: rgba(232,64,64,0.1); color: var(--danger); border-color: rgba(232,64,64,0.3); }
+    #menu-btn:hover   { background: var(--border); color: var(--text-primary); }
 
+    /* ETA — slightly more visible but still not prominent */
     #eta-center {
       text-align: center;
     }
-    #eta-center .eta-arrive {
+    #eta-center .eta-time {
       font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
+      font-weight: 600;
+      color: var(--text-dim);
       transition: color 0.3s;
     }
     #eta-center .eta-meta {
       font-size: 10px;
-      color: var(--text-muted);
+      color: var(--text-dim);
+      margin-top: 1px;
       transition: color 0.3s;
     }
-
-    #menu-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--border);
-      border: 1px solid var(--border-strong);
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      transition: background 0.2s;
-      user-select: none;
-      position: relative;
-    }
-    #menu-btn:hover { background: var(--border-strong); }
 
     /* ── POPUP MENU ── */
     #popup-menu {
       position: absolute;
-      bottom: 46px;
-      right: 14px;
+      bottom: 46px; right: 12px;
       background: var(--bg-menu);
       border: 1px solid var(--border-strong);
       border-radius: 12px;
-      padding: 6px 0;
-      min-width: 160px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      padding: 5px 0;
+      min-width: 158px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.4);
       display: none;
       z-index: 100;
       transition: background 0.3s;
@@ -373,126 +331,91 @@
     #popup-menu.open { display: block; animation: popIn 0.15s ease-out; }
 
     .menu-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 15px;
       font-size: 13px;
       color: var(--text-primary);
       cursor: pointer;
-      transition: background 0.15s, color 0.3s;
       user-select: none;
+      transition: background 0.15s, color 0.3s;
     }
     .menu-item:hover { background: var(--border); }
-    .menu-item .menu-icon { font-size: 15px; width: 20px; text-align: center; }
+    .menu-item .mi { font-size: 14px; width: 18px; text-align: center; }
+    .menu-divider { height: 1px; background: var(--border); margin: 3px 0; }
 
-    .menu-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 4px 0;
-    }
-
-    /* ══════════════════════════════════════════
-       EXTERNAL PHASE SWITCHER
-    ══════════════════════════════════════════ */
+    /* ══ EXTERNAL PHASE SWITCHER ══ */
     #phase-switcher {
       width: 375px;
       background: var(--switcher-bg);
-      border: 1px solid var(--switcher-border);
+      border: 1px solid var(--switcher-bd);
       border-radius: 12px;
-      padding: 12px 16px 14px;
+      padding: 11px 16px 13px;
       flex-shrink: 0;
-      transition: background 0.3s, border-color 0.3s;
+      transition: background 0.3s;
     }
-
     #switcher-label {
       font-size: 10px;
-      color: var(--text-muted);
+      color: var(--text-dim);
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      margin-bottom: 10px;
+      margin-bottom: 9px;
       font-family: 'DM Mono', monospace;
       transition: color 0.3s;
     }
-
     #phase-slider {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 3px;
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 3px;
       border-radius: 2px;
       background: var(--border-strong);
-      outline: none;
-      cursor: pointer;
-      margin-bottom: 8px;
+      outline: none; cursor: pointer;
+      margin-bottom: 7px;
     }
     #phase-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: 2px solid var(--bg-body);
-      cursor: pointer;
+      width: 15px; height: 15px; border-radius: 50%;
+      background: var(--accent); border: 2px solid var(--bg-body); cursor: pointer;
     }
     #phase-slider::-moz-range-thumb {
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: 2px solid var(--bg-body);
-      cursor: pointer;
+      width: 15px; height: 15px; border-radius: 50%;
+      background: var(--accent); border: 2px solid var(--bg-body); cursor: pointer;
     }
-
     #phase-labels { display: flex; justify-content: space-between; }
     #phase-labels span {
-      font-size: 10px;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: color 0.2s;
-      user-select: none;
+      font-size: 10px; color: var(--text-dim);
+      cursor: pointer; user-select: none; transition: color 0.2s;
     }
     #phase-labels span.active { color: var(--accent); font-weight: 600; }
-    #phase-labels span:hover { color: var(--text-secondary); }
+    #phase-labels span:hover  { color: var(--text-primary); }
 
     /* ── ANIMATIONS ── */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .phase-enter { animation: fadeIn 0.25s ease-out; }
-
-    @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0; }
-      to   { transform: translateY(0); opacity: 1; }
-    }
-
-    @keyframes popIn {
-      from { opacity: 0; transform: scale(0.92) translateY(4px); }
-      to   { opacity: 1; transform: scale(1) translateY(0); }
-    }
+    @keyframes fadeIn  { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideUp { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
+    @keyframes popIn   { from { opacity:0; transform:scale(.93) translateY(3px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    .phase-enter { animation: fadeIn 0.22s ease-out; }
   </style>
 </head>
 <body>
 
-  <!-- ══ PHONE UI ══ -->
+  <!-- ══ PHONE ══ -->
   <div id="phone">
 
     <!-- NAV PANEL (30%) -->
     <div id="nav-panel">
-      <div id="nav-top-row">
+      <div id="nav-primary">
         <div id="turn-icon"></div>
-        <div id="nav-text">
+        <div id="command-block">
           <div id="instruction-text">Stay in lane</div>
           <div id="distance-readout">1 mi</div>
         </div>
       </div>
-      <div id="nav-bottom-row">
-        <div id="eta-info">Via I-85 N</div>
-        <div id="route-summary"><span id="eta-dur">3:11</span> · 8.2 mi remaining</div>
+      <div id="nav-secondary">
+        <span>Via I-85 N</span>
+        <span><span id="eta-dur">3 min</span> · 8.2 mi</span>
       </div>
       <div id="lane-banner"></div>
     </div>
 
-    <!-- MAP SECTION -->
+    <!-- MAP -->
     <div id="map-section">
       <div id="road-canvas">
         <svg id="scene-svg" width="100%" height="100%"></svg>
@@ -513,36 +436,28 @@
       </div>
     </div>
 
-    <!-- BOTTOM ACTION BAR -->
+    <!-- BOTTOM BAR — non-essential, muted -->
     <div id="bottom-bar">
-      <div id="cancel-btn" title="Cancel navigation">✕</div>
+      <div id="cancel-btn" title="Cancel">✕</div>
       <div id="eta-center">
-        <div class="eta-arrive">Arrive <strong id="eta-time">3:14 PM</strong></div>
+        <div class="eta-time" id="eta-time">3:14 PM</div>
         <div class="eta-meta"><span id="eta-min">3 min</span> · 8.2 mi</div>
       </div>
-      <div id="menu-btn" title="More options">···</div>
-
-      <!-- Popup menu -->
+      <div id="menu-btn" title="More">···</div>
       <div id="popup-menu">
         <div class="menu-item" id="theme-toggle">
-          <span class="menu-icon" id="theme-icon">☀️</span>
+          <span class="mi" id="theme-icon">☀️</span>
           <span id="theme-label">Light mode</span>
         </div>
         <div class="menu-divider"></div>
-        <div class="menu-item">
-          <span class="menu-icon">🔇</span>
-          <span>Mute voice</span>
-        </div>
-        <div class="menu-item">
-          <span class="menu-icon">↩</span>
-          <span>Alternative routes</span>
-        </div>
+        <div class="menu-item"><span class="mi">🔇</span><span>Mute voice</span></div>
+        <div class="menu-item"><span class="mi">↩</span><span>Alt routes</span></div>
       </div>
     </div>
 
   </div>
 
-  <!-- ══ EXTERNAL PHASE SWITCHER ══ -->
+  <!-- ══ PHASE SWITCHER (not part of UI) ══ -->
   <div id="phase-switcher">
     <div id="switcher-label">Phase switcher — prototype control only</div>
     <input type="range" id="phase-slider" min="0" max="4" step="1" value="0">
@@ -557,6 +472,7 @@
 
   <script>
     // ── PHASE DATA ──────────────────────────────────────────────────────────
+    // Short imperative commands — easy to read at a glance while driving
     const PHASES = [
       {
         id: 0,
@@ -565,308 +481,353 @@
         turnIconType: 'straight',
         bannerVisible: false,
         etaMin: '3 min',
-        scene: 'top-down-highway',
+        scene: 'highway',
         carLane: 1,
-        showExit: false,
         routePath: 'straight',
+        showExit: false,
         progressPct: 0.05,
       },
       {
         id: 1,
-        instruction: 'Move to right lane',
+        instruction: 'Move right',
         distance: '500 ft',
         turnIconType: 'lane-right',
         bannerVisible: true,
-        bannerText: '● Move to right lane — exit in 500 ft',
+        bannerText: '▶  Move to right lane',
         etaMin: '3 min',
-        scene: 'top-down-highway',
+        scene: 'highway',
         carLane: 1,
-        showExit: true,
         routePath: 'curving-right',
+        showExit: true,
         progressPct: 0.40,
       },
       {
         id: 2,
-        instruction: 'Exit 1A — take ramp',
-        distance: 'Exit 1A',
+        instruction: 'Take exit 1A',
+        distance: 'Exit now',
         turnIconType: 'exit-right',
         bannerVisible: false,
         etaMin: '2 min',
-        scene: 'top-down-highway',
+        scene: 'highway',
         carLane: 2,
+        routePath: 'onto-ramp',
         showExit: true,
         showExitLabel: true,
-        routePath: 'onto-ramp',
         progressPct: 0.82,
       },
       {
         id: 3,
-        instruction: 'Turn right at light',
+        instruction: 'Turn right',
         distance: '200 ft',
         turnIconType: 'turn-right',
         bannerVisible: false,
         etaMin: '1 min',
-        scene: 'schematic-intersection',
+        scene: 'intersection',
         turnDirection: 'right',
         progressPct: 0.95,
       },
       {
         id: 4,
-        instruction: 'Continue straight',
+        instruction: 'Go straight',
         distance: '0.8 mi',
         turnIconType: 'straight',
         bannerVisible: false,
         etaMin: '1 min',
-        scene: 'top-down-highway',
+        scene: 'highway',
         carLane: 1,
-        showExit: false,
         routePath: 'straight',
+        showExit: false,
         progressPct: 0.08,
       },
     ];
 
     // ── THEME ────────────────────────────────────────────────────────────────
     let isDark = true;
-
     document.getElementById('theme-toggle').addEventListener('click', () => {
       isDark = !isDark;
       document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('theme-icon').textContent  = isDark ? '☀️' : '🌙';
       document.getElementById('theme-label').textContent = isDark ? 'Light mode' : 'Dark mode';
       closeMenu();
-      // Redraw scene for updated road colors
       renderPhase(currentPhase);
     });
 
     // ── MENU ─────────────────────────────────────────────────────────────────
-    const menuBtn = document.getElementById('menu-btn');
-    const popupMenu = document.getElementById('popup-menu');
-
-    menuBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      popupMenu.classList.toggle('open');
-    });
-
+    const menuBtn    = document.getElementById('menu-btn');
+    const popupMenu  = document.getElementById('popup-menu');
+    menuBtn.addEventListener('click', e => { e.stopPropagation(); popupMenu.classList.toggle('open'); });
     function closeMenu() { popupMenu.classList.remove('open'); }
-
     document.addEventListener('click', closeMenu);
     popupMenu.addEventListener('click', e => e.stopPropagation());
 
     // ── SVG HELPERS ──────────────────────────────────────────────────────────
     const scene = document.getElementById('scene-svg');
     const NS = 'http://www.w3.org/2000/svg';
-
     function svgEl(tag, attrs) {
       const el = document.createElementNS(NS, tag);
-      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+      for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
       return el;
     }
     function add(el) { scene.appendChild(el); }
     function W() { return scene.clientWidth; }
     function H() { return scene.clientHeight; }
     function clearScene() { scene.innerHTML = ''; }
+    const th = (d, l) => isDark ? d : l;
 
-    function themeVal(darkVal, lightVal) {
-      return isDark ? darkVal : lightVal;
-    }
-
-    // ── TOP-DOWN ROAD ────────────────────────────────────────────────────────
-    function drawTopDownRoad() {
+    // ── ROAD GEOMETRY ────────────────────────────────────────────────────────
+    // Road occupies 68% of canvas width so lanes are wide and clear
+    function getRoad() {
       const w = W(), h = H();
       const laneCount = 3;
-      const laneW = 40;
-      const roadW = laneCount * laneW;
-      const roadLeft = (w - roadW) / 2;
+      const roadW = Math.round(w * 0.68);
+      const laneW  = roadW / laneCount;
+      const roadLeft  = (w - roadW) / 2;
       const roadRight = roadLeft + roadW;
-      const lineThick = 5;
+      const shoulder  = 5;
+      const laneCenters = Array.from({length: laneCount}, (_, i) => roadLeft + laneW * (i + 0.5));
+      return { w, h, laneCount, roadW, laneW, roadLeft, roadRight, shoulder, laneCenters };
+    }
+
+    // ── DRAW ROAD SURFACE + THICK LANE LINES ─────────────────────────────────
+    function drawRoad(r) {
+      const { w, h, laneCount, roadW, laneW, roadLeft, roadRight, shoulder } = r;
+      const roadColor  = th('#1c2030', '#8f99aa');
+      const offColor   = th('#0a0d14', '#aab2c0');
+      const lineColor  = th('rgba(255,255,255,0.58)', 'rgba(255,255,255,0.82)');
+      const dashColor  = th('rgba(255,255,255,0.45)', 'rgba(255,255,255,0.65)');
+      const lineW = 5;       // all lane lines thick
+      const dashLen = 24, gapLen = 18;
 
       // Off-road
-      add(svgEl('rect', { x: 0, y: 0, width: w, height: h, fill: themeVal('#0D1018', '#b0b8c8') }));
+      add(svgEl('rect', { x:0, y:0, width:w, height:h, fill:offColor }));
       // Road surface
-      add(svgEl('rect', { x: roadLeft, y: 0, width: roadW, height: h, fill: themeVal('#1a1e28', '#9ba3b4') }));
-
+      add(svgEl('rect', { x:roadLeft, y:0, width:roadW, height:h, fill:roadColor }));
       // Shoulders
-      add(svgEl('rect', { x: roadLeft - lineThick, y: 0, width: lineThick, height: h, fill: themeVal('rgba(255,255,255,0.7)', 'rgba(255,255,255,0.85)') }));
-      add(svgEl('rect', { x: roadRight, y: 0, width: lineThick, height: h, fill: themeVal('rgba(255,255,255,0.7)', 'rgba(255,255,255,0.85)') }));
-
+      add(svgEl('rect', { x:roadLeft - lineW, y:0, width:lineW, height:h, fill:lineColor }));
+      add(svgEl('rect', { x:roadRight,        y:0, width:lineW, height:h, fill:lineColor }));
       // Lane dividers — thick dashed
-      const dashLen = 22, gapLen = 16;
       for (let i = 1; i < laneCount; i++) {
         const lx = roadLeft + i * laneW;
         for (let y = 0; y < h; y += dashLen + gapLen) {
-          add(svgEl('rect', {
-            x: lx - lineThick / 2, y,
-            width: lineThick, height: dashLen,
-            fill: themeVal('rgba(255,255,255,0.65)', 'rgba(255,255,255,0.8)'),
-          }));
+          add(svgEl('rect', { x:lx - lineW/2, y, width:lineW, height:dashLen, fill:dashColor }));
         }
       }
-
-      return { roadLeft, roadRight, roadW, laneW, lineThick };
     }
 
-    // ── CAR ───────────────────────────────────────────────────────────────────
-    function drawCar(cx, cy) {
-      const defs = svgEl('defs', {});
-      const filtId = 'cg_' + Math.random().toString(36).slice(2);
-      const filt = svgEl('filter', { id: filtId, x: '-60%', y: '-60%', width: '220%', height: '220%' });
-      const blur = svgEl('feGaussianBlur', { stdDeviation: '5', result: 'blur' });
-      const flood = svgEl('feFlood', { 'flood-color': '#00C8A0', 'flood-opacity': '0.6', result: 'color' });
-      const comp = svgEl('feComposite', { in: 'color', in2: 'blur', operator: 'in', result: 'glow' });
-      const merge = svgEl('feMerge', {});
-      merge.appendChild(svgEl('feMergeNode', { in: 'glow' }));
-      merge.appendChild(svgEl('feMergeNode', { in: 'SourceGraphic' }));
-      filt.appendChild(blur); filt.appendChild(flood); filt.appendChild(comp); filt.appendChild(merge);
-      defs.appendChild(filt);
-      add(defs);
+    // ── LANE ROUTE FILL ──────────────────────────────────────────────────────
+    // Fills ~82% of a lane with a semi-transparent teal highlight,
+    // then draws a bright center line on top — makes the intended lane unmissable
+    function drawLaneRouteStraight(centerX, laneW, carY) {
+      const fillW = laneW * 0.82;
 
-      const pts = `${cx},${cy - 18} ${cx - 13},${cy + 12} ${cx + 13},${cy + 12}`;
-      add(svgEl('polygon', { points: pts, fill: '#fff', filter: `url(#${filtId})` }));
+      // Background fill (wide, low opacity)
+      const fill = svgEl('rect', {
+        x: centerX - fillW/2, y: 0,
+        width: fillW, height: carY,
+        fill: '#00C8A0',
+        opacity: 0.22,
+        rx: 6,
+      });
+      add(fill);
+
+      // Bright center direction line
+      const line = svgEl('line', {
+        x1: centerX, y1: carY - 20,
+        x2: centerX, y2: 0,
+        stroke: '#00C8A0',
+        'stroke-width': 4,
+        'stroke-linecap': 'round',
+      });
+      line.style.strokeDasharray = 600;
+      line.style.strokeDashoffset = 600;
+      line.style.transition = 'stroke-dashoffset 0.5s ease-out';
+      add(line);
+      requestAnimationFrame(() => requestAnimationFrame(() => { line.style.strokeDashoffset = 0; }));
     }
 
-    // ── ANIMATED PATH ────────────────────────────────────────────────────────
-    function animatedPath(d, color = '#00C8A0', width = 6) {
-      const path = svgEl('path', {
-        d,
-        stroke: color,
-        'stroke-width': width,
+    function drawLaneRouteCurve(fromX, toX, laneW, carY, h) {
+      // Wide background path
+      const midY = carY * 0.48;
+      const bgPath = svgEl('path', {
+        d: `M ${fromX} ${carY} Q ${fromX} ${midY + 30} ${toX} ${midY} L ${toX} 0`,
+        stroke: '#00C8A0',
+        'stroke-width': laneW * 0.82,
+        'stroke-opacity': 0.22,
+        fill: 'none',
+        'stroke-linecap': 'butt',
+      });
+      add(bgPath);
+
+      // Bright center line
+      const line = svgEl('path', {
+        d: `M ${fromX} ${carY} Q ${fromX} ${midY + 30} ${toX} ${midY} L ${toX} 0`,
+        stroke: '#00C8A0',
+        'stroke-width': 4,
         fill: 'none',
         'stroke-linecap': 'round',
         'stroke-linejoin': 'round',
       });
-      const len = 900;
-      path.style.strokeDasharray = len;
-      path.style.strokeDashoffset = len;
-      path.style.transition = 'stroke-dashoffset 0.55s ease-out';
-      add(path);
-      requestAnimationFrame(() => requestAnimationFrame(() => { path.style.strokeDashoffset = '0'; }));
-      return path;
+      const len = 700;
+      line.style.strokeDasharray = len;
+      line.style.strokeDashoffset = len;
+      line.style.transition = 'stroke-dashoffset 0.5s ease-out';
+      add(line);
+      requestAnimationFrame(() => requestAnimationFrame(() => { line.style.strokeDashoffset = 0; }));
     }
 
-    // ── RENDER TOP-DOWN HIGHWAY ──────────────────────────────────────────────
-    function renderTopDownHighway(phase) {
-      const w = W(), h = H();
-      const road = drawTopDownRoad();
-      const { roadLeft, roadRight, laneW, lineThick } = road;
+    function drawLaneRouteRamp(fromX, rampStartY, r) {
+      const endX = r.w - 4, endY = r.h * 0.04;
+      const rampX = r.roadRight + r.shoulder;
 
-      const laneCenters = [
-        roadLeft + laneW * 0.5,
-        roadLeft + laneW * 1.5,
-        roadLeft + laneW * 2.5,
-      ];
+      const bgPath = svgEl('path', {
+        d: `M ${fromX} ${r.h * 0.72} L ${fromX} ${rampStartY} Q ${rampX + 25} ${rampStartY - 12} ${endX} ${endY}`,
+        stroke: '#00C8A0',
+        'stroke-width': r.laneW * 0.82,
+        'stroke-opacity': 0.22,
+        fill: 'none',
+        'stroke-linecap': 'butt',
+      });
+      add(bgPath);
 
-      const carY = h * 0.72;
+      const line = svgEl('path', {
+        d: `M ${fromX} ${r.h * 0.72} L ${fromX} ${rampStartY} Q ${rampX + 25} ${rampStartY - 12} ${endX} ${endY}`,
+        stroke: '#00C8A0',
+        'stroke-width': 4,
+        fill: 'none',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
+      });
+      const len = 800;
+      line.style.strokeDasharray = len;
+      line.style.strokeDashoffset = len;
+      line.style.transition = 'stroke-dashoffset 0.5s ease-out';
+      add(line);
+      requestAnimationFrame(() => requestAnimationFrame(() => { line.style.strokeDashoffset = 0; }));
+    }
+
+    // ── CAR ───────────────────────────────────────────────────────────────────
+    function drawCar(cx, cy) {
+      const id = 'gf' + (Math.random() * 1e6 | 0);
+      const defs = svgEl('defs', {});
+      const filt = svgEl('filter', { id, x:'-70%', y:'-70%', width:'240%', height:'240%' });
+      const blur = svgEl('feGaussianBlur', { stdDeviation:'6', result:'b' });
+      const flood = svgEl('feFlood', { 'flood-color':'#00C8A0', 'flood-opacity':'0.55', result:'c' });
+      const comp = svgEl('feComposite', { in:'c', in2:'b', operator:'in', result:'g' });
+      const merge = svgEl('feMerge', {});
+      merge.appendChild(svgEl('feMergeNode', { in:'g' }));
+      merge.appendChild(svgEl('feMergeNode', { in:'SourceGraphic' }));
+      filt.appendChild(blur); filt.appendChild(flood); filt.appendChild(comp); filt.appendChild(merge);
+      defs.appendChild(filt);
+      add(defs);
+      add(svgEl('polygon', {
+        points: `${cx},${cy-20} ${cx-14},${cy+13} ${cx+14},${cy+13}`,
+        fill: '#fff', filter: `url(#${id})`,
+      }));
+    }
+
+    // ── EXIT RAMP ─────────────────────────────────────────────────────────────
+    function drawExitRamp(r, rampStartY) {
+      const { w, h, roadRight, shoulder } = r;
+      const rampEndX = w - 4, rampEndY = h * 0.04;
+      const d = `M ${roadRight + shoulder} ${rampStartY} Q ${rampEndX} ${rampStartY} ${rampEndX} ${rampEndY}`;
+      add(svgEl('path', { d, stroke: th('#1c2030','#8f99aa'), 'stroke-width': 36, fill:'none' }));
+      add(svgEl('path', { d, stroke: th('rgba(255,255,255,0.45)','rgba(255,255,255,0.72)'), 'stroke-width': 5, fill:'none', 'stroke-dasharray':'11 9', 'stroke-linecap':'round' }));
+    }
+
+    // ── RENDER HIGHWAY ────────────────────────────────────────────────────────
+    function renderHighway(phase) {
+      const r = getRoad();
+      const { h, laneW, laneCenters, roadRight, shoulder } = r;
+      drawRoad(r);
+
       const carLane = phase.carLane ?? 1;
-      const carX = laneCenters[carLane];
+      const carX    = laneCenters[carLane];
+      const carY    = h * 0.72;
+      const rampStartY = h * 0.18;
 
-      // Exit ramp (phases 1, 2)
-      if (phase.showExit) {
-        const rampStartY = h * 0.18;
-        const rampStartX = roadRight + lineThick;
-        const rampEndX = w - 4;
-        const rampEndY = h * 0.04;
+      if (phase.showExit) drawExitRamp(r, rampStartY);
 
-        // Ramp surface
-        add(svgEl('path', {
-          d: `M ${rampStartX} ${rampStartY} Q ${rampEndX} ${rampStartY} ${rampEndX} ${rampEndY}`,
-          stroke: themeVal('#1a1e28', '#9ba3b4'),
-          'stroke-width': 34,
-          fill: 'none',
-        }));
-        // Ramp edge lines
-        add(svgEl('path', {
-          d: `M ${rampStartX} ${rampStartY} Q ${rampEndX} ${rampStartY} ${rampEndX} ${rampEndY}`,
-          stroke: themeVal('rgba(255,255,255,0.5)', 'rgba(255,255,255,0.75)'),
-          'stroke-width': lineThick,
-          fill: 'none',
-          'stroke-dasharray': '10 8',
-          'stroke-linecap': 'round',
-        }));
-      }
+      if      (phase.routePath === 'straight')      drawLaneRouteStraight(carX, laneW, carY);
+      else if (phase.routePath === 'curving-right')  drawLaneRouteCurve(carX, laneCenters[2], laneW, carY, h);
+      else if (phase.routePath === 'onto-ramp')      drawLaneRouteRamp(carX, rampStartY, r);
 
-      // Route path
-      if (phase.routePath === 'straight') {
-        animatedPath(`M ${carX} ${carY} L ${carX} 0`);
-      } else if (phase.routePath === 'curving-right') {
-        const rightX = laneCenters[2];
-        const midY = carY * 0.55;
-        animatedPath(`M ${carX} ${carY} Q ${carX} ${midY + 40} ${rightX} ${midY} L ${rightX} 0`);
-      } else if (phase.routePath === 'onto-ramp') {
-        const rampStartY = h * 0.18;
-        const rampStartX = roadRight + lineThick;
-        animatedPath(`M ${carX} ${carY} L ${carX} ${rampStartY} Q ${rampStartX + 20} ${rampStartY - 10} ${W() - 4} ${h * 0.04}`);
-      }
-
-      // Car (drawn on top)
       drawCar(carX, carY);
     }
 
-    // ── SCHEMATIC INTERSECTION ───────────────────────────────────────────────
-    function renderSchematic(phase) {
+    // ── RENDER INTERSECTION ───────────────────────────────────────────────────
+    function renderIntersection(phase) {
       const w = W(), h = H();
       const cx = w * 0.5;
       const crossY = h * 0.42;
-      const vW = 60, hW = 54;
-      const lineThick = 5;
+      const vW = 64, hW = 56, lineW = 5;
+      const dir = phase.turnDirection;
 
-      add(svgEl('rect', { x: 0, y: 0, width: w, height: h, fill: themeVal('#0D1018', '#b0b8c8') }));
+      add(svgEl('rect', { x:0, y:0, width:w, height:h, fill: th('#0a0d14','#aab2c0') }));
+      add(svgEl('rect', { x:cx-vW/2, y:0, width:vW, height:h,  fill: th('#1c2030','#8f99aa') }));
+      add(svgEl('rect', { x:0, y:crossY-hW/2, width:w, height:hW, fill: th('#1c2030','#8f99aa') }));
 
-      // Roads
-      add(svgEl('rect', { x: cx - vW / 2, y: 0, width: vW, height: h, fill: themeVal('#1a1e28', '#9ba3b4') }));
-      add(svgEl('rect', { x: 0, y: crossY - hW / 2, width: w, height: hW, fill: themeVal('#1a1e28', '#9ba3b4') }));
+      const lc = th('rgba(255,255,255,0.58)','rgba(255,255,255,0.82)');
+      const dc = th('rgba(255,255,255,0.4)','rgba(255,255,255,0.62)');
 
-      const laneColor = themeVal('rgba(255,255,255,0.65)', 'rgba(255,255,255,0.85)');
+      // Edges
+      add(svgEl('rect', { x:cx-vW/2-lineW, y:0, width:lineW, height:h, fill:lc }));
+      add(svgEl('rect', { x:cx+vW/2,       y:0, width:lineW, height:h, fill:lc }));
+      add(svgEl('rect', { x:0, y:crossY-hW/2-lineW, width:w, height:lineW, fill:lc }));
+      add(svgEl('rect', { x:0, y:crossY+hW/2,       width:w, height:lineW, fill:lc }));
 
-      // Road edge lines — vertical
-      for (const side of [-1, 1]) {
-        const ex = cx + side * (vW / 2);
-        add(svgEl('line', { x1: ex, y1: 0, x2: ex, y2: h, stroke: laneColor, 'stroke-width': lineThick }));
-      }
-      // Road edge lines — horizontal
-      for (const side of [-1, 1]) {
-        const ey = crossY + side * (hW / 2);
-        add(svgEl('line', { x1: 0, y1: ey, x2: w, y2: ey, stroke: laneColor, 'stroke-width': lineThick }));
-      }
-
-      // Center dashes — vertical
-      const dashColor = themeVal('rgba(255,255,255,0.4)', 'rgba(255,255,255,0.6)');
-      for (let y = crossY + hW / 2 + 10; y < h; y += 38) {
-        add(svgEl('rect', { x: cx - lineThick / 2, y, width: lineThick, height: 20, fill: dashColor }));
-      }
-      // Center dashes — horizontal
-      for (let x = 0; x < cx - vW / 2; x += 38) {
-        add(svgEl('rect', { x, y: crossY - lineThick / 2, width: 20, height: lineThick, fill: dashColor }));
-      }
-      for (let x = cx + vW / 2 + 10; x < w; x += 38) {
-        add(svgEl('rect', { x, y: crossY - lineThick / 2, width: 20, height: lineThick, fill: dashColor }));
-      }
+      // Center dashes
+      for (let y = crossY+hW/2+10; y < h; y += 40)
+        add(svgEl('rect', { x:cx-lineW/2, y, width:lineW, height:22, fill:dc }));
+      for (let x = 0; x < cx-vW/2; x += 40)
+        add(svgEl('rect', { x, y:crossY-lineW/2, width:22, height:lineW, fill:dc }));
+      for (let x = cx+vW/2+10; x < w; x += 40)
+        add(svgEl('rect', { x, y:crossY-lineW/2, width:22, height:lineW, fill:dc }));
 
       // Stop line
-      add(svgEl('rect', { x: cx - vW / 2, y: crossY + hW / 2 + 4, width: vW, height: 4, fill: 'rgba(255,255,255,0.8)' }));
+      add(svgEl('rect', { x:cx-vW/2, y:crossY+hW/2+4, width:vW, height:4, fill:'rgba(255,255,255,0.8)' }));
 
       // Traffic light
-      const tlX = cx + vW / 2 + 10;
-      const tlY = crossY - hW / 2 - 46;
-      add(svgEl('rect', { x: tlX, y: tlY, width: 18, height: 44, rx: 4, fill: themeVal('#252830', '#c0c5d0') }));
-      add(svgEl('circle', { cx: tlX + 9, cy: tlY + 10, r: 5.5, fill: '#cc3333' }));
-      add(svgEl('circle', { cx: tlX + 9, cy: tlY + 22, r: 5.5, fill: themeVal('#444', '#999') }));
-      add(svgEl('circle', { cx: tlX + 9, cy: tlY + 34, r: 5.5, fill: themeVal('#444', '#999') }));
+      const tlX = cx + vW/2 + 10, tlY = crossY - hW/2 - 48;
+      add(svgEl('rect', { x:tlX, y:tlY, width:18, height:44, rx:4, fill: th('#252830','#c0c5d0') }));
+      add(svgEl('circle', { cx:tlX+9, cy:tlY+10,  r:5.5, fill:'#cc3333' }));
+      add(svgEl('circle', { cx:tlX+9, cy:tlY+22,  r:5.5, fill: th('#444','#999') }));
+      add(svgEl('circle', { cx:tlX+9, cy:tlY+34,  r:5.5, fill: th('#444','#999') }));
 
-      // Route
-      const carY = h - 65;
-      const dir = phase.turnDirection;
+      const carY = h - 70;
+
+      // Wide lane fill on approach
+      add(svgEl('rect', {
+        x: cx - vW/2 * 0.82, y: crossY + hW/2,
+        width: vW * 0.82, height: carY - crossY - hW/2,
+        fill: '#00C8A0', opacity: 0.22, rx: 4,
+      }));
+
+      // Route path with wide fill
       const turnEndX = dir === 'right' ? w - 10 : 10;
-      animatedPath(
-        `M ${cx} ${carY - 18} L ${cx} ${crossY} Q ${cx} ${crossY + 2} ${cx + (dir === 'right' ? vW * 0.6 : -vW * 0.6)} ${crossY} L ${turnEndX} ${crossY}`,
-        '#00C8A0', 5
-      );
+      const horizFillH = hW * 0.82;
+      const horizFillY = crossY - horizFillH / 2;
 
-      // Small turn arrow
-      const ax = cx + (dir === 'right' ? vW * 0.8 : -vW * 0.8);
+      if (dir === 'right') {
+        add(svgEl('rect', { x:cx, y:horizFillY, width:w/2, height:horizFillH, fill:'#00C8A0', opacity:0.22, rx:4 }));
+      } else {
+        add(svgEl('rect', { x:0, y:horizFillY, width:cx, height:horizFillH, fill:'#00C8A0', opacity:0.22, rx:4 }));
+      }
+
+      // Center line
+      const turnD = `M ${cx} ${carY - 20} L ${cx} ${crossY} Q ${cx} ${crossY + 2} ${cx + (dir==='right'? vW*0.55 : -vW*0.55)} ${crossY} L ${turnEndX} ${crossY}`;
+      const tl = svgEl('path', { d:turnD, stroke:'#00C8A0', 'stroke-width':4, fill:'none', 'stroke-linecap':'round', 'stroke-linejoin':'round' });
+      const len = 700;
+      tl.style.strokeDasharray = len; tl.style.strokeDashoffset = len;
+      tl.style.transition = 'stroke-dashoffset 0.5s ease-out';
+      add(tl);
+      requestAnimationFrame(() => requestAnimationFrame(() => { tl.style.strokeDashoffset = 0; }));
+
+      // Turn arrow chevron
+      const ax = cx + (dir==='right' ? vW*0.9 : -vW*0.9);
       const arrowD = dir === 'right'
-        ? `M ${ax - 10} ${crossY + 10} L ${ax - 10} ${crossY - 4} Q ${ax - 10} ${crossY - 13} ${ax - 2} ${crossY - 13} L ${ax + 10} ${crossY - 13} M ${ax + 4} ${crossY - 18} L ${ax + 10} ${crossY - 13} L ${ax + 4} ${crossY - 8}`
-        : `M ${ax + 10} ${crossY + 10} L ${ax + 10} ${crossY - 4} Q ${ax + 10} ${crossY - 13} ${ax + 2} ${crossY - 13} L ${ax - 10} ${crossY - 13} M ${ax - 4} ${crossY - 18} L ${ax - 10} ${crossY - 13} L ${ax - 4} ${crossY - 8}`;
-      add(svgEl('path', { d: arrowD, stroke: '#F5A623', 'stroke-width': 2.5, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+        ? `M ${ax-10} ${crossY+10} L ${ax-10} ${crossY-4} Q ${ax-10} ${crossY-14} ${ax-2} ${crossY-14} L ${ax+12} ${crossY-14} M ${ax+5} ${crossY-20} L ${ax+12} ${crossY-14} L ${ax+5} ${crossY-8}`
+        : `M ${ax+10} ${crossY+10} L ${ax+10} ${crossY-4} Q ${ax+10} ${crossY-14} ${ax+2} ${crossY-14} L ${ax-12} ${crossY-14} M ${ax-5} ${crossY-20} L ${ax-12} ${crossY-14} L ${ax-5} ${crossY-8}`;
+      add(svgEl('path', { d:arrowD, stroke:'#F5A623', 'stroke-width':2.5, fill:'none', 'stroke-linecap':'round', 'stroke-linejoin':'round' }));
 
       drawCar(cx, carY);
     }
@@ -876,34 +837,30 @@
       const ns = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(ns, 'svg');
       svg.setAttribute('viewBox', '0 0 56 56');
-      svg.setAttribute('width', '56');
-      svg.setAttribute('height', '56');
-      svg.setAttribute('fill', 'none');
-
-      const defs = {
-        straight:   'M 28 46 L 28 14 M 18 24 L 28 14 L 38 24',
-        'lane-right': 'M 16 46 L 16 28 Q 16 16 26 16 L 40 16 M 32 8 L 40 16 L 32 24',
-        'exit-right': 'M 16 46 L 16 20 M 16 26 Q 16 14 28 14 L 44 14 M 36 6 L 44 14 L 36 22',
-        'turn-right': 'M 18 46 L 18 22 Q 18 10 30 10 L 40 10 M 32 2 L 40 10 L 32 18',
+      svg.setAttribute('width',   '60');
+      svg.setAttribute('height',  '60');
+      const paths = {
+        'straight':    'M 28 48 L 28 12 M 17 22 L 28 12 L 39 22',
+        'lane-right':  'M 15 48 L 15 28 Q 15 14 27 14 L 42 14 M 33 6 L 42 14 L 33 22',
+        'exit-right':  'M 15 48 L 15 20 M 15 27 Q 15 13 27 13 L 44 13 M 36 5 L 44 13 L 36 21',
+        'turn-right':  'M 17 48 L 17 22 Q 17 10 29 10 L 40 10 M 31 2 L 40 10 L 31 18',
       };
-
       const path = document.createElementNS(ns, 'path');
-      path.setAttribute('d', defs[type] || defs.straight);
+      path.setAttribute('d', paths[type] || paths.straight);
       path.setAttribute('stroke', '#00C8A0');
-      path.setAttribute('stroke-width', '3');
+      path.setAttribute('stroke-width', '3.5');
       path.setAttribute('fill', 'none');
       path.setAttribute('stroke-linecap', 'round');
       path.setAttribute('stroke-linejoin', 'round');
       svg.appendChild(path);
-
-      const container = document.getElementById('turn-icon');
-      container.innerHTML = '';
-      container.appendChild(svg);
+      const c = document.getElementById('turn-icon');
+      c.innerHTML = '';
+      c.appendChild(svg);
     }
 
     // ── PROGRESS BAR ─────────────────────────────────────────────────────────
     function updateProgressBar(pct) {
-      document.getElementById('progress-fill').style.height = (pct * 100).toFixed(1) + '%';
+      document.getElementById('progress-fill').style.height    = (pct * 100).toFixed(1) + '%';
       document.getElementById('progress-car-dot').style.bottom = (pct * 100).toFixed(1) + '%';
     }
 
@@ -920,33 +877,22 @@
       scene.classList.add('phase-enter');
       scene.addEventListener('animationend', () => scene.classList.remove('phase-enter'), { once: true });
 
-      // Header
       document.getElementById('instruction-text').textContent = phase.instruction;
       document.getElementById('distance-readout').textContent = phase.distance;
-      document.getElementById('eta-dur').textContent = phase.etaMin;
-      document.getElementById('eta-min').textContent = phase.etaMin;
+      document.getElementById('eta-dur').textContent  = phase.etaMin;
+      document.getElementById('eta-min').textContent  = phase.etaMin;
       drawTurnIcon(phase.turnIconType);
 
-      // Banner
       const banner = document.getElementById('lane-banner');
-      if (phase.bannerVisible) {
-        banner.textContent = phase.bannerText;
-        banner.style.display = 'block';
-      } else {
-        banner.style.display = 'none';
-      }
+      if (phase.bannerVisible) { banner.textContent = phase.bannerText; banner.style.display = 'block'; }
+      else                     { banner.style.display = 'none'; }
 
-      // Exit sign
       document.getElementById('exit-sign').style.display = phase.showExitLabel ? 'block' : 'none';
-
-      // Progress bar
       updateProgressBar(phase.progressPct ?? 0.05);
 
-      // Scene
-      if (phase.scene === 'top-down-highway') renderTopDownHighway(phase);
-      else if (phase.scene === 'schematic-intersection') renderSchematic(phase);
+      if      (phase.scene === 'highway')      renderHighway(phase);
+      else if (phase.scene === 'intersection') renderIntersection(phase);
 
-      // Phase labels
       document.querySelectorAll('#phase-labels span').forEach((el, i) => {
         el.classList.toggle('active', i === n);
       });
@@ -954,27 +900,20 @@
 
     // ── SLIDER ────────────────────────────────────────────────────────────────
     const slider = document.getElementById('phase-slider');
-
     function updateSliderFill(val) {
       const pct = (val / 4) * 100;
       slider.style.background = `linear-gradient(to right, #00C8A0 ${pct}%, var(--border-strong) ${pct}%)`;
     }
-
     slider.addEventListener('input', e => {
-      const val = parseInt(e.target.value);
-      renderPhase(val);
-      updateSliderFill(val);
+      const v = parseInt(e.target.value);
+      renderPhase(v); updateSliderFill(v);
     });
-
     document.querySelectorAll('#phase-labels span').forEach(el => {
       el.addEventListener('click', () => {
         const p = parseInt(el.dataset.phase);
-        slider.value = p;
-        renderPhase(p);
-        updateSliderFill(p);
+        slider.value = p; renderPhase(p); updateSliderFill(p);
       });
     });
-
     window.addEventListener('resize', () => renderPhase(currentPhase));
 
     // ── INIT ──────────────────────────────────────────────────────────────────
