@@ -1,13 +1,11 @@
 <!--
   CS6750 HCI Project: Navigation Prototype
-  Combined Lane-Aware + Simplified Direction Design
-
   Deploy: push index.html to a GitHub repo.
   Go to Settings → Pages → Source: main branch / root.
-  Your prototype will be live at https://[username].github.io/[repo-name]/
+  Live at https://[username].github.io/[repo-name]/
 -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,52 +16,170 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    /* ══ THEME TOKENS ══ */
+    :root {
+      --accent: #00C8A0;
+      --amber: #F5A623;
+      --danger: #E84040;
+    }
+
+    [data-theme="dark"] {
+      --bg-body:        #0a0c10;
+      --bg-panel:       #1A1D24;
+      --bg-map:         #0D1018;
+      --bg-road:        #1a1e28;
+      --bg-progress:    #141720;
+      --bg-menu:        #22262f;
+      --border:         rgba(255,255,255,0.08);
+      --border-strong:  rgba(255,255,255,0.15);
+      --text-primary:   #ffffff;
+      --text-secondary: rgba(255,255,255,0.5);
+      --text-muted:     rgba(255,255,255,0.28);
+      --lane-line:      rgba(255,255,255,0.65);
+      --road-shoulder:  rgba(255,255,255,0.7);
+      --offroad:        #0D1018;
+      --switcher-bg:    rgba(255,255,255,0.04);
+      --switcher-border:rgba(255,255,255,0.08);
+    }
+
+    [data-theme="light"] {
+      --bg-body:        #e8eaee;
+      --bg-panel:       #ffffff;
+      --bg-map:         #c8cdd8;
+      --bg-road:        #9ba3b4;
+      --bg-progress:    #dde0e8;
+      --bg-menu:        #ffffff;
+      --border:         rgba(0,0,0,0.08);
+      --border-strong:  rgba(0,0,0,0.15);
+      --text-primary:   #1a1d24;
+      --text-secondary: rgba(0,0,0,0.5);
+      --text-muted:     rgba(0,0,0,0.35);
+      --lane-line:      rgba(255,255,255,0.85);
+      --road-shoulder:  rgba(255,255,255,0.9);
+      --offroad:        #b0b8c8;
+      --switcher-bg:    rgba(0,0,0,0.04);
+      --switcher-border:rgba(0,0,0,0.1);
+    }
+
     body {
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      background: #111318;
-      color: #fff;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      background: var(--bg-body);
       font-family: 'Inter', sans-serif;
+      padding: 24px 16px 16px;
+      gap: 20px;
+      transition: background 0.3s;
     }
 
-    /* ── HEADER BAR ── */
-    #header-bar {
-      height: 72px;
+    /* ══════════════════════════════════════════
+       PHONE FRAME
+    ══════════════════════════════════════════ */
+    #phone {
+      width: 375px;
+      height: 680px;
+      background: var(--bg-panel);
+      border-radius: 36px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 0 1px var(--border), 0 24px 80px rgba(0,0,0,0.5);
+      position: relative;
       flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    /* ── NAV PANEL (30% = 204px) ── */
+    #nav-panel {
+      height: 30%;
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border);
+      gap: 6px;
+      flex-shrink: 0;
+      position: relative;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    #nav-top-row {
       display: flex;
       align-items: center;
-      padding: 0 20px;
-      gap: 12px;
-      background: #1A1D24;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      gap: 14px;
     }
 
-    #turn-icon {
-      width: 40px;
-      height: 40px;
-      flex-shrink: 0;
-    }
+    #turn-icon { width: 56px; height: 56px; flex-shrink: 0; }
+
+    #nav-text { flex: 1; min-width: 0; }
 
     #instruction-text {
-      font-size: 16px;
-      font-weight: 600;
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-primary);
+      transition: color 0.3s;
     }
 
     #distance-readout {
       font-family: 'DM Mono', monospace;
-      font-size: 22px;
-      color: #00C8A0;
-      flex-shrink: 0;
+      font-size: 15px;
+      color: var(--accent);
+      margin-top: 4px;
     }
 
-    /* ── MAP CANVAS ── */
-    #map-canvas {
+    #nav-bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+      margin-top: 2px;
+    }
+
+    #eta-info {
+      font-size: 12px;
+      color: var(--text-secondary);
+      transition: color 0.3s;
+    }
+    #eta-info strong { color: var(--text-primary); font-weight: 600; }
+
+    #route-summary {
+      font-size: 12px;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+
+    /* Lane change banner */
+    #lane-banner {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(245,166,35,0.16);
+      border-top: 1px solid rgba(245,166,35,0.5);
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 16px;
+      display: none;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    /* ── MAP SECTION ── */
+    #map-section {
+      flex: 1;
+      display: flex;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-map);
+      transition: background 0.3s;
+    }
+
+    #road-canvas {
       flex: 1;
       position: relative;
       overflow: hidden;
@@ -75,395 +191,541 @@
       display: block;
     }
 
-    /* ── LANE CHANGE BANNER ── */
-    #lane-banner {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(245,166,35,0.15);
-      border-bottom: 1px solid rgba(245,166,35,0.4);
-      color: #F5A623;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 6px 16px;
-      display: none;
-      animation: slideDown 0.3s ease-out;
-      z-index: 10;
-    }
-
-    /* ── EXIT SIGN ── */
     #exit-sign {
       position: absolute;
       top: 14px;
-      right: 16px;
+      left: 50%;
+      transform: translateX(-50%);
       background: #1A6B3A;
       border: 2px solid #fff;
       color: #fff;
       border-radius: 6px;
-      padding: 6px 14px;
+      padding: 4px 14px;
       font-family: 'DM Mono', monospace;
-      font-size: 18px;
+      text-align: center;
       display: none;
       z-index: 10;
-      text-align: center;
     }
-    #exit-sign .exit-label { font-size: 11px; display: block; opacity: 0.8; }
-    #exit-sign .exit-number { font-size: 20px; font-weight: 500; display: block; }
+    #exit-sign .exit-label { font-size: 10px; display: block; opacity: 0.8; }
+    #exit-sign .exit-number { font-size: 18px; font-weight: 500; display: block; }
 
-    /* ── BOTTOM PANEL ── */
-    #bottom-panel {
-      height: 110px;
-      flex-shrink: 0;
-      background: #1A1D24;
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding: 12px 20px;
-    }
-
-    #eta-bar {
-      font-size: 13px;
-      color: rgba(255,255,255,0.5);
-      margin-bottom: 10px;
-    }
-    #eta-time { color: #fff; font-weight: 600; }
-
-    #slider-track {
+    /* ── VERTICAL PROGRESS BAR ── */
+    #progress-bar-panel {
+      width: 52px;
+      background: var(--bg-progress);
+      border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      align-items: center;
+      padding: 14px 0 14px;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
     }
 
-    /* ── RANGE SLIDER ── */
+    #progress-exit-label {
+      font-size: 9px;
+      font-family: 'DM Mono', monospace;
+      background: #1A6B3A22;
+      border: 1px solid #1A6B3A88;
+      border-radius: 3px;
+      padding: 2px 5px;
+      text-align: center;
+      z-index: 2;
+      flex-shrink: 0;
+      color: #4ade80;
+    }
+
+    #progress-track-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      padding: 8px 0;
+    }
+
+    #progress-track {
+      width: 4px;
+      flex: 1;
+      background: var(--border-strong);
+      border-radius: 2px;
+      position: relative;
+      overflow: visible;
+      transition: background 0.3s;
+    }
+
+    #progress-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(to top, var(--accent), rgba(0,200,160,0.25));
+      border-radius: 2px;
+      transition: height 0.5s ease-out;
+    }
+
+    #progress-car-dot {
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      width: 12px;
+      height: 12px;
+      background: #fff;
+      border: 2.5px solid var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(0,200,160,0.6);
+      transition: bottom 0.5s ease-out;
+    }
+
+    #progress-you-label {
+      font-size: 8px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 6px;
+      font-family: 'DM Mono', monospace;
+      flex-shrink: 0;
+      transition: color 0.3s;
+    }
+
+    /* ── BOTTOM ACTION BAR ── */
+    #bottom-bar {
+      height: 52px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+      position: relative;
+    }
+
+    #cancel-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(232,64,64,0.12);
+      border: 1px solid rgba(232,64,64,0.3);
+      color: var(--danger);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1;
+      transition: background 0.2s;
+      user-select: none;
+    }
+    #cancel-btn:hover { background: rgba(232,64,64,0.22); }
+
+    #eta-center {
+      text-align: center;
+    }
+    #eta-center .eta-arrive {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      transition: color 0.3s;
+    }
+    #eta-center .eta-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+
+    #menu-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--border);
+      border: 1px solid var(--border-strong);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      transition: background 0.2s;
+      user-select: none;
+      position: relative;
+    }
+    #menu-btn:hover { background: var(--border-strong); }
+
+    /* ── POPUP MENU ── */
+    #popup-menu {
+      position: absolute;
+      bottom: 46px;
+      right: 14px;
+      background: var(--bg-menu);
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      padding: 6px 0;
+      min-width: 160px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      display: none;
+      z-index: 100;
+      transition: background 0.3s;
+    }
+    #popup-menu.open { display: block; animation: popIn 0.15s ease-out; }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.15s, color 0.3s;
+      user-select: none;
+    }
+    .menu-item:hover { background: var(--border); }
+    .menu-item .menu-icon { font-size: 15px; width: 20px; text-align: center; }
+
+    .menu-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    /* ══════════════════════════════════════════
+       EXTERNAL PHASE SWITCHER
+    ══════════════════════════════════════════ */
+    #phase-switcher {
+      width: 375px;
+      background: var(--switcher-bg);
+      border: 1px solid var(--switcher-border);
+      border-radius: 12px;
+      padding: 12px 16px 14px;
+      flex-shrink: 0;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    #switcher-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      font-family: 'DM Mono', monospace;
+      transition: color 0.3s;
+    }
+
     #phase-slider {
       -webkit-appearance: none;
       appearance: none;
       width: 100%;
       height: 3px;
       border-radius: 2px;
-      background: rgba(255,255,255,0.15);
+      background: var(--border-strong);
       outline: none;
       cursor: pointer;
+      margin-bottom: 8px;
     }
     #phase-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
+      width: 16px; height: 16px;
       border-radius: 50%;
-      background: #00C8A0;
-      border: 2px solid #111318;
+      background: var(--accent);
+      border: 2px solid var(--bg-body);
       cursor: pointer;
     }
     #phase-slider::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
+      width: 16px; height: 16px;
       border-radius: 50%;
-      background: #00C8A0;
-      border: 2px solid #111318;
+      background: var(--accent);
+      border: 2px solid var(--bg-body);
       cursor: pointer;
     }
 
-    /* ── PHASE LABELS ── */
-    #phase-labels {
-      display: flex;
-      justify-content: space-between;
-    }
+    #phase-labels { display: flex; justify-content: space-between; }
     #phase-labels span {
-      font-size: 11px;
-      color: rgba(255,255,255,0.35);
+      font-size: 10px;
+      color: var(--text-muted);
       cursor: pointer;
       transition: color 0.2s;
       user-select: none;
     }
-    #phase-labels span.active {
-      color: #00C8A0;
-      font-weight: 600;
-    }
-    #phase-labels span:hover {
-      color: rgba(255,255,255,0.7);
-    }
+    #phase-labels span.active { color: var(--accent); font-weight: 600; }
+    #phase-labels span:hover { color: var(--text-secondary); }
 
     /* ── ANIMATIONS ── */
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(4px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .phase-enter {
-      animation: fadeIn 0.3s ease-out;
+    .phase-enter { animation: fadeIn 0.25s ease-out; }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
     }
 
-    @keyframes slideDown {
-      from { transform: translateY(-100%); opacity: 0; }
-      to   { transform: translateY(0); opacity: 1; }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.92) translateY(4px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER BAR -->
-  <div id="header-bar">
-    <div id="turn-icon"></div>
-    <div id="instruction-text"></div>
-    <div id="distance-readout"></div>
-  </div>
+  <!-- ══ PHONE UI ══ -->
+  <div id="phone">
 
-  <!-- MAP CANVAS -->
-  <div id="map-canvas">
-    <svg id="scene-svg" width="100%" height="100%"></svg>
-    <div id="lane-banner">● Move to right lane in 0.5 mi</div>
-    <div id="exit-sign">
-      <span class="exit-label">Exit</span>
-      <span class="exit-number">1A</span>
-    </div>
-  </div>
-
-  <!-- BOTTOM PANEL -->
-  <div id="bottom-panel">
-    <div id="eta-bar">
-      <span id="eta-time">3:11</span>
-      <span id="eta-dist"> · 8.2 mi · Arrive 3:14 PM</span>
-    </div>
-    <div id="slider-track">
-      <input type="range" id="phase-slider" min="0" max="4" step="1" value="0">
-      <div id="phase-labels">
-        <span data-phase="0">1 mi ahead</span>
-        <span data-phase="1">500 ft</span>
-        <span data-phase="2">At exit</span>
-        <span data-phase="3">Complex turn</span>
-        <span data-phase="4">After turn</span>
+    <!-- NAV PANEL (30%) -->
+    <div id="nav-panel">
+      <div id="nav-top-row">
+        <div id="turn-icon"></div>
+        <div id="nav-text">
+          <div id="instruction-text">Stay in lane</div>
+          <div id="distance-readout">1 mi</div>
+        </div>
       </div>
+      <div id="nav-bottom-row">
+        <div id="eta-info">Via I-85 N</div>
+        <div id="route-summary"><span id="eta-dur">3:11</span> · 8.2 mi remaining</div>
+      </div>
+      <div id="lane-banner"></div>
+    </div>
+
+    <!-- MAP SECTION -->
+    <div id="map-section">
+      <div id="road-canvas">
+        <svg id="scene-svg" width="100%" height="100%"></svg>
+        <div id="exit-sign">
+          <span class="exit-label">Exit</span>
+          <span class="exit-number">1A</span>
+        </div>
+      </div>
+      <div id="progress-bar-panel">
+        <div id="progress-exit-label">1A</div>
+        <div id="progress-track-wrap">
+          <div id="progress-track">
+            <div id="progress-fill"></div>
+            <div id="progress-car-dot"></div>
+          </div>
+        </div>
+        <div id="progress-you-label">YOU</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ACTION BAR -->
+    <div id="bottom-bar">
+      <div id="cancel-btn" title="Cancel navigation">✕</div>
+      <div id="eta-center">
+        <div class="eta-arrive">Arrive <strong id="eta-time">3:14 PM</strong></div>
+        <div class="eta-meta"><span id="eta-min">3 min</span> · 8.2 mi</div>
+      </div>
+      <div id="menu-btn" title="More options">···</div>
+
+      <!-- Popup menu -->
+      <div id="popup-menu">
+        <div class="menu-item" id="theme-toggle">
+          <span class="menu-icon" id="theme-icon">☀️</span>
+          <span id="theme-label">Light mode</span>
+        </div>
+        <div class="menu-divider"></div>
+        <div class="menu-item">
+          <span class="menu-icon">🔇</span>
+          <span>Mute voice</span>
+        </div>
+        <div class="menu-item">
+          <span class="menu-icon">↩</span>
+          <span>Alternative routes</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ EXTERNAL PHASE SWITCHER ══ -->
+  <div id="phase-switcher">
+    <div id="switcher-label">Phase switcher — prototype control only</div>
+    <input type="range" id="phase-slider" min="0" max="4" step="1" value="0">
+    <div id="phase-labels">
+      <span data-phase="0">1 mi ahead</span>
+      <span data-phase="1">500 ft</span>
+      <span data-phase="2">At exit</span>
+      <span data-phase="3">Complex turn</span>
+      <span data-phase="4">After turn</span>
     </div>
   </div>
 
   <script>
-    // ── PHASE DATA ──────────────────────────────────────────────────────────────
+    // ── PHASE DATA ──────────────────────────────────────────────────────────
     const PHASES = [
       {
         id: 0,
-        label: '1 mi ahead',
         instruction: 'Stay in lane',
         distance: '1 mi',
         turnIconType: 'straight',
         bannerVisible: false,
-        etaTime: '3:11',
-        scene: 'perspective-highway',
+        etaMin: '3 min',
+        scene: 'top-down-highway',
         carLane: 1,
         showExit: false,
         routePath: 'straight',
+        progressPct: 0.05,
       },
       {
         id: 1,
-        label: '500 ft',
         instruction: 'Move to right lane',
         distance: '500 ft',
         turnIconType: 'lane-right',
         bannerVisible: true,
-        bannerText: '● Move to right lane in 0.5 mi',
-        etaTime: '3:11',
-        scene: 'perspective-highway',
+        bannerText: '● Move to right lane — exit in 500 ft',
+        etaMin: '3 min',
+        scene: 'top-down-highway',
         carLane: 1,
         showExit: true,
         routePath: 'curving-right',
+        progressPct: 0.40,
       },
       {
         id: 2,
-        label: 'At exit',
         instruction: 'Exit 1A — take ramp',
         distance: 'Exit 1A',
         turnIconType: 'exit-right',
         bannerVisible: false,
-        etaTime: '2:54',
-        scene: 'perspective-highway',
+        etaMin: '2 min',
+        scene: 'top-down-highway',
         carLane: 2,
         showExit: true,
         showExitLabel: true,
         routePath: 'onto-ramp',
+        progressPct: 0.82,
       },
       {
         id: 3,
-        label: 'Complex turn',
         instruction: 'Turn right at light',
         distance: '200 ft',
         turnIconType: 'turn-right',
         bannerVisible: false,
-        etaTime: '2:41',
+        etaMin: '1 min',
         scene: 'schematic-intersection',
         turnDirection: 'right',
-        routePath: 'turn',
+        progressPct: 0.95,
       },
       {
         id: 4,
-        label: 'After turn',
         instruction: 'Continue straight',
         distance: '0.8 mi',
         turnIconType: 'straight',
         bannerVisible: false,
-        etaTime: '2:38',
-        scene: 'perspective-highway',
+        etaMin: '1 min',
+        scene: 'top-down-highway',
         carLane: 1,
         showExit: false,
         routePath: 'straight',
+        progressPct: 0.08,
       },
     ];
 
-    // ── SVG HELPERS ─────────────────────────────────────────────────────────────
+    // ── THEME ────────────────────────────────────────────────────────────────
+    let isDark = true;
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = isDark ? 'Light mode' : 'Dark mode';
+      closeMenu();
+      // Redraw scene for updated road colors
+      renderPhase(currentPhase);
+    });
+
+    // ── MENU ─────────────────────────────────────────────────────────────────
+    const menuBtn = document.getElementById('menu-btn');
+    const popupMenu = document.getElementById('popup-menu');
+
+    menuBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      popupMenu.classList.toggle('open');
+    });
+
+    function closeMenu() { popupMenu.classList.remove('open'); }
+
+    document.addEventListener('click', closeMenu);
+    popupMenu.addEventListener('click', e => e.stopPropagation());
+
+    // ── SVG HELPERS ──────────────────────────────────────────────────────────
     const scene = document.getElementById('scene-svg');
     const NS = 'http://www.w3.org/2000/svg';
 
     function svgEl(tag, attrs) {
       const el = document.createElementNS(NS, tag);
-      for (const [k, v] of Object.entries(attrs)) {
-        el.setAttribute(k, v);
-      }
+      for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
       return el;
     }
-
     function add(el) { scene.appendChild(el); }
     function W() { return scene.clientWidth; }
     function H() { return scene.clientHeight; }
     function clearScene() { scene.innerHTML = ''; }
 
-    // ── PERSPECTIVE ROAD ────────────────────────────────────────────────────────
-    function drawPerspectiveRoad(laneCount, opts = {}) {
+    function themeVal(darkVal, lightVal) {
+      return isDark ? darkVal : lightVal;
+    }
+
+    // ── TOP-DOWN ROAD ────────────────────────────────────────────────────────
+    function drawTopDownRoad() {
       const w = W(), h = H();
-      const vanishX = w * 0.5;
-      const vanishY = h * 0.32;
-      const roadBottomLeft = w * 0.05;
-      const roadBottomRight = w * 0.95;
-      const roadBottomWidth = roadBottomRight - roadBottomLeft;
+      const laneCount = 3;
+      const laneW = 40;
+      const roadW = laneCount * laneW;
+      const roadLeft = (w - roadW) / 2;
+      const roadRight = roadLeft + roadW;
+      const lineThick = 5;
 
-      // Sky gradient
-      const sky = svgEl('defs', {});
-      const skyGrad = svgEl('linearGradient', { id: 'skyGrad', x1: '0', y1: '0', x2: '0', y2: '1' });
-      skyGrad.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#0A0D14' }));
-      skyGrad.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#1A1D24' }));
-      sky.appendChild(skyGrad);
-      add(sky);
+      // Off-road
+      add(svgEl('rect', { x: 0, y: 0, width: w, height: h, fill: themeVal('#0D1018', '#b0b8c8') }));
+      // Road surface
+      add(svgEl('rect', { x: roadLeft, y: 0, width: roadW, height: h, fill: themeVal('#1a1e28', '#9ba3b4') }));
 
-      // Sky
-      add(svgEl('rect', { x: 0, y: 0, width: w, height: vanishY, fill: 'url(#skyGrad)' }));
+      // Shoulders
+      add(svgEl('rect', { x: roadLeft - lineThick, y: 0, width: lineThick, height: h, fill: themeVal('rgba(255,255,255,0.7)', 'rgba(255,255,255,0.85)') }));
+      add(svgEl('rect', { x: roadRight, y: 0, width: lineThick, height: h, fill: themeVal('rgba(255,255,255,0.7)', 'rgba(255,255,255,0.85)') }));
 
-      // Road surface — trapezoid
-      const roadPath = `M ${roadBottomLeft} ${h} L ${vanishX - 2} ${vanishY} L ${vanishX + 2} ${vanishY} L ${roadBottomRight} ${h} Z`;
-      add(svgEl('path', { d: roadPath, fill: '#111318' }));
-
-      // Draw perspective dashed lines
-      const divCount = laneCount + 1;
-      for (let i = 0; i < divCount; i++) {
-        const f = i / (divCount - 1);
-        const bx = roadBottomLeft + f * roadBottomWidth;
-        const isSolid = (i === 0 || i === divCount - 1);
-
-        if (isSolid) {
-          add(svgEl('line', {
-            x1: vanishX, y1: vanishY,
-            x2: bx, y2: h,
-            stroke: 'rgba(255,255,255,0.8)',
-            'stroke-width': 2,
+      // Lane dividers — thick dashed
+      const dashLen = 22, gapLen = 16;
+      for (let i = 1; i < laneCount; i++) {
+        const lx = roadLeft + i * laneW;
+        for (let y = 0; y < h; y += dashLen + gapLen) {
+          add(svgEl('rect', {
+            x: lx - lineThick / 2, y,
+            width: lineThick, height: dashLen,
+            fill: themeVal('rgba(255,255,255,0.65)', 'rgba(255,255,255,0.8)'),
           }));
-        } else {
-          // Dashed perspective line
-          const steps = 30;
-          for (let s = 0; s < steps; s++) {
-            const t0 = s / steps;
-            const t1 = (s + 0.5) / steps;
-            const y0 = vanishY + (h - vanishY) * t0;
-            const y1 = vanishY + (h - vanishY) * t1;
-            const x0 = vanishX + (bx - vanishX) * t0;
-            const x1 = vanishX + (bx - vanishX) * t1;
-            add(svgEl('line', {
-              x1: x0, y1: y0, x2: x1, y2: y1,
-              stroke: 'rgba(255,255,255,0.45)',
-              'stroke-width': 1.5,
-            }));
-          }
         }
       }
 
-      // Horizon line glow
-      add(svgEl('line', {
-        x1: 0, y1: vanishY, x2: w, y2: vanishY,
-        stroke: 'rgba(0,200,160,0.15)',
-        'stroke-width': 20,
-      }));
-
-      return { vanishX, vanishY, roadBottomLeft, roadBottomRight, roadBottomWidth };
+      return { roadLeft, roadRight, roadW, laneW, lineThick };
     }
 
-    // ── LANE X POSITION ─────────────────────────────────────────────────────────
-    function getLaneX(lane, laneCount, roadInfo, yFrac) {
-      // yFrac: 0=vanish, 1=bottom
-      const { vanishX, roadBottomLeft, roadBottomRight } = roadInfo;
-      const roadBottomWidth = roadBottomRight - roadBottomLeft;
-      const laneW = roadBottomWidth / laneCount;
-      const bx = roadBottomLeft + (lane + 0.5) * laneW;
-      return vanishX + (bx - vanishX) * yFrac;
-    }
-
-    // ── CAR TRIANGLE ────────────────────────────────────────────────────────────
+    // ── CAR ───────────────────────────────────────────────────────────────────
     function drawCar(cx, cy) {
       const defs = svgEl('defs', {});
-      const filter = svgEl('filter', { id: 'carGlow', x: '-50%', y: '-50%', width: '200%', height: '200%' });
-      const blur = svgEl('feGaussianBlur', { stdDeviation: '4', result: 'blur' });
-      const flood = svgEl('feFlood', { 'flood-color': '#00C8A0', 'flood-opacity': '0.5', result: 'color' });
-      const composite = svgEl('feComposite', { in: 'color', in2: 'blur', operator: 'in', result: 'glow' });
+      const filtId = 'cg_' + Math.random().toString(36).slice(2);
+      const filt = svgEl('filter', { id: filtId, x: '-60%', y: '-60%', width: '220%', height: '220%' });
+      const blur = svgEl('feGaussianBlur', { stdDeviation: '5', result: 'blur' });
+      const flood = svgEl('feFlood', { 'flood-color': '#00C8A0', 'flood-opacity': '0.6', result: 'color' });
+      const comp = svgEl('feComposite', { in: 'color', in2: 'blur', operator: 'in', result: 'glow' });
       const merge = svgEl('feMerge', {});
       merge.appendChild(svgEl('feMergeNode', { in: 'glow' }));
       merge.appendChild(svgEl('feMergeNode', { in: 'SourceGraphic' }));
-      filter.appendChild(blur);
-      filter.appendChild(flood);
-      filter.appendChild(composite);
-      filter.appendChild(merge);
-      defs.appendChild(filter);
+      filt.appendChild(blur); filt.appendChild(flood); filt.appendChild(comp); filt.appendChild(merge);
+      defs.appendChild(filt);
       add(defs);
 
-      const pts = `${cx},${cy - 16} ${cx - 12},${cy + 10} ${cx + 12},${cy + 10}`;
-      add(svgEl('polygon', {
-        points: pts,
-        fill: '#ffffff',
-        filter: 'url(#carGlow)',
-      }));
+      const pts = `${cx},${cy - 18} ${cx - 13},${cy + 12} ${cx + 13},${cy + 12}`;
+      add(svgEl('polygon', { points: pts, fill: '#fff', filter: `url(#${filtId})` }));
     }
 
-    // ── EXIT RAMP ───────────────────────────────────────────────────────────────
-    function drawExitRamp(roadInfo, divergeY) {
-      const w = W(), h = H();
-      const { vanishX, roadBottomRight, roadBottomWidth, vanishY } = roadInfo;
-
-      // Find where right road edge is at divergeY
-      const t = (divergeY - vanishY) / (h - vanishY);
-      const rightEdgeAtDiverge = vanishX + (roadBottomRight - vanishX) * t;
-
-      // Ramp curves from rightEdgeAtDiverge to right edge of canvas
-      const cp1x = rightEdgeAtDiverge + (w - rightEdgeAtDiverge) * 0.3;
-      const cp1y = divergeY + (h - divergeY) * 0.3;
-      const endX = w + 10;
-      const endY = h * 0.8;
-
-      // Ramp surface
-      const rampPath = `M ${rightEdgeAtDiverge} ${divergeY} Q ${cp1x} ${cp1y} ${endX} ${endY}`;
-      add(svgEl('path', {
-        d: rampPath,
-        stroke: '#1a1d22',
-        'stroke-width': 38,
-        fill: 'none',
-        'stroke-linecap': 'butt',
-      }));
-      // Ramp borders
-      add(svgEl('path', {
-        d: rampPath,
-        stroke: 'rgba(255,255,255,0.5)',
-        'stroke-width': 1.5,
-        fill: 'none',
-        'stroke-dasharray': '8 6',
-        'stroke-linecap': 'round',
-      }));
-
-      return { rampPath, startX: rightEdgeAtDiverge, startY: divergeY };
-    }
-
-    // ── ROUTE PATH ──────────────────────────────────────────────────────────────
-    function drawRoutePath(d, color = '#00C8A0', width = 6) {
+    // ── ANIMATED PATH ────────────────────────────────────────────────────────
+    function animatedPath(d, color = '#00C8A0', width = 6) {
       const path = svgEl('path', {
         d,
         stroke: color,
@@ -472,209 +734,180 @@
         'stroke-linecap': 'round',
         'stroke-linejoin': 'round',
       });
-
-      // Animated draw-on
-      const len = 600; // approx
+      const len = 900;
       path.style.strokeDasharray = len;
       path.style.strokeDashoffset = len;
-      path.style.transition = 'stroke-dashoffset 0.5s ease-out';
+      path.style.transition = 'stroke-dashoffset 0.55s ease-out';
       add(path);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => { path.style.strokeDashoffset = '0'; });
-      });
+      requestAnimationFrame(() => requestAnimationFrame(() => { path.style.strokeDashoffset = '0'; }));
+      return path;
     }
 
-    // ── SCHEMATIC INTERSECTION ──────────────────────────────────────────────────
-    function drawSchematicIntersection(turnDirection) {
+    // ── RENDER TOP-DOWN HIGHWAY ──────────────────────────────────────────────
+    function renderTopDownHighway(phase) {
+      const w = W(), h = H();
+      const road = drawTopDownRoad();
+      const { roadLeft, roadRight, laneW, lineThick } = road;
+
+      const laneCenters = [
+        roadLeft + laneW * 0.5,
+        roadLeft + laneW * 1.5,
+        roadLeft + laneW * 2.5,
+      ];
+
+      const carY = h * 0.72;
+      const carLane = phase.carLane ?? 1;
+      const carX = laneCenters[carLane];
+
+      // Exit ramp (phases 1, 2)
+      if (phase.showExit) {
+        const rampStartY = h * 0.18;
+        const rampStartX = roadRight + lineThick;
+        const rampEndX = w - 4;
+        const rampEndY = h * 0.04;
+
+        // Ramp surface
+        add(svgEl('path', {
+          d: `M ${rampStartX} ${rampStartY} Q ${rampEndX} ${rampStartY} ${rampEndX} ${rampEndY}`,
+          stroke: themeVal('#1a1e28', '#9ba3b4'),
+          'stroke-width': 34,
+          fill: 'none',
+        }));
+        // Ramp edge lines
+        add(svgEl('path', {
+          d: `M ${rampStartX} ${rampStartY} Q ${rampEndX} ${rampStartY} ${rampEndX} ${rampEndY}`,
+          stroke: themeVal('rgba(255,255,255,0.5)', 'rgba(255,255,255,0.75)'),
+          'stroke-width': lineThick,
+          fill: 'none',
+          'stroke-dasharray': '10 8',
+          'stroke-linecap': 'round',
+        }));
+      }
+
+      // Route path
+      if (phase.routePath === 'straight') {
+        animatedPath(`M ${carX} ${carY} L ${carX} 0`);
+      } else if (phase.routePath === 'curving-right') {
+        const rightX = laneCenters[2];
+        const midY = carY * 0.55;
+        animatedPath(`M ${carX} ${carY} Q ${carX} ${midY + 40} ${rightX} ${midY} L ${rightX} 0`);
+      } else if (phase.routePath === 'onto-ramp') {
+        const rampStartY = h * 0.18;
+        const rampStartX = roadRight + lineThick;
+        animatedPath(`M ${carX} ${carY} L ${carX} ${rampStartY} Q ${rampStartX + 20} ${rampStartY - 10} ${W() - 4} ${h * 0.04}`);
+      }
+
+      // Car (drawn on top)
+      drawCar(carX, carY);
+    }
+
+    // ── SCHEMATIC INTERSECTION ───────────────────────────────────────────────
+    function renderSchematic(phase) {
       const w = W(), h = H();
       const cx = w * 0.5;
+      const crossY = h * 0.42;
+      const vW = 60, hW = 54;
+      const lineThick = 5;
 
-      // Background
-      add(svgEl('rect', { x: 0, y: 0, width: w, height: h, fill: '#0D1018' }));
+      add(svgEl('rect', { x: 0, y: 0, width: w, height: h, fill: themeVal('#0D1018', '#b0b8c8') }));
 
-      // Road widths
-      const vRoadW = w * 0.18;
-      const hRoadW = h * 0.14;
-      const crossY = h * 0.38;
+      // Roads
+      add(svgEl('rect', { x: cx - vW / 2, y: 0, width: vW, height: h, fill: themeVal('#1a1e28', '#9ba3b4') }));
+      add(svgEl('rect', { x: 0, y: crossY - hW / 2, width: w, height: hW, fill: themeVal('#1a1e28', '#9ba3b4') }));
 
-      // Vertical road (approach)
-      add(svgEl('rect', {
-        x: cx - vRoadW / 2, y: crossY + hRoadW / 2,
-        width: vRoadW, height: h - crossY - hRoadW / 2,
-        fill: '#111318',
-      }));
-
-      // Vertical road above intersection (going straight)
-      add(svgEl('rect', {
-        x: cx - vRoadW / 2, y: 0,
-        width: vRoadW, height: crossY - hRoadW / 2,
-        fill: '#111318',
-      }));
-
-      // Horizontal road
-      add(svgEl('rect', {
-        x: 0, y: crossY - hRoadW / 2,
-        width: w, height: hRoadW,
-        fill: '#111318',
-      }));
-
-      // Intersection box
-      add(svgEl('rect', {
-        x: cx - vRoadW / 2, y: crossY - hRoadW / 2,
-        width: vRoadW, height: hRoadW,
-        fill: '#111318',
-      }));
+      const laneColor = themeVal('rgba(255,255,255,0.65)', 'rgba(255,255,255,0.85)');
 
       // Road edge lines — vertical
       for (const side of [-1, 1]) {
-        const ex = cx + side * vRoadW / 2;
-        add(svgEl('line', {
-          x1: ex, y1: crossY + hRoadW / 2, x2: ex, y2: h,
-          stroke: 'rgba(255,255,255,0.6)', 'stroke-width': 1.5,
-        }));
-        add(svgEl('line', {
-          x1: ex, y1: 0, x2: ex, y2: crossY - hRoadW / 2,
-          stroke: 'rgba(255,255,255,0.6)', 'stroke-width': 1.5,
-        }));
+        const ex = cx + side * (vW / 2);
+        add(svgEl('line', { x1: ex, y1: 0, x2: ex, y2: h, stroke: laneColor, 'stroke-width': lineThick }));
       }
-
       // Road edge lines — horizontal
       for (const side of [-1, 1]) {
-        const ey = crossY + side * hRoadW / 2;
-        add(svgEl('line', {
-          x1: 0, y1: ey, x2: cx - vRoadW / 2, y2: ey,
-          stroke: 'rgba(255,255,255,0.6)', 'stroke-width': 1.5,
-        }));
-        add(svgEl('line', {
-          x1: cx + vRoadW / 2, y1: ey, x2: w, y2: ey,
-          stroke: 'rgba(255,255,255,0.6)', 'stroke-width': 1.5,
-        }));
+        const ey = crossY + side * (hW / 2);
+        add(svgEl('line', { x1: 0, y1: ey, x2: w, y2: ey, stroke: laneColor, 'stroke-width': lineThick }));
       }
 
-      // Center dashed line — vertical approach
-      for (let y = crossY + hRoadW / 2 + 10; y < h; y += 28) {
-        add(svgEl('line', {
-          x1: cx, y1: y, x2: cx, y2: y + 14,
-          stroke: 'rgba(255,255,255,0.3)', 'stroke-width': 1.5,
-        }));
+      // Center dashes — vertical
+      const dashColor = themeVal('rgba(255,255,255,0.4)', 'rgba(255,255,255,0.6)');
+      for (let y = crossY + hW / 2 + 10; y < h; y += 38) {
+        add(svgEl('rect', { x: cx - lineThick / 2, y, width: lineThick, height: 20, fill: dashColor }));
       }
-
-      // Center dashed line — horizontal
-      for (let x = 0; x < cx - vRoadW / 2; x += 28) {
-        add(svgEl('line', {
-          x1: x, y1: crossY, x2: x + 14, y2: crossY,
-          stroke: 'rgba(255,255,255,0.3)', 'stroke-width': 1.5,
-        }));
+      // Center dashes — horizontal
+      for (let x = 0; x < cx - vW / 2; x += 38) {
+        add(svgEl('rect', { x, y: crossY - lineThick / 2, width: 20, height: lineThick, fill: dashColor }));
       }
-      for (let x = cx + vRoadW / 2; x < w; x += 28) {
-        add(svgEl('line', {
-          x1: x, y1: crossY, x2: x + 14, y2: crossY,
-          stroke: 'rgba(255,255,255,0.3)', 'stroke-width': 1.5,
-        }));
+      for (let x = cx + vW / 2 + 10; x < w; x += 38) {
+        add(svgEl('rect', { x, y: crossY - lineThick / 2, width: 20, height: lineThick, fill: dashColor }));
       }
 
       // Stop line
-      add(svgEl('line', {
-        x1: cx - vRoadW / 2, y1: crossY + hRoadW / 2 + 4,
-        x2: cx + vRoadW / 2, y2: crossY + hRoadW / 2 + 4,
-        stroke: 'rgba(255,255,255,0.8)', 'stroke-width': 3,
-      }));
-
-      // Crosswalk
-      const cwY = crossY + hRoadW / 2 + 10;
-      for (let xi = 0; xi < 5; xi++) {
-        const bx = cx - vRoadW / 2 + 3 + xi * (vRoadW - 6) / 5;
-        add(svgEl('rect', {
-          x: bx, y: cwY, width: (vRoadW - 6) / 6, height: 8,
-          fill: 'rgba(255,255,255,0.25)',
-        }));
-      }
+      add(svgEl('rect', { x: cx - vW / 2, y: crossY + hW / 2 + 4, width: vW, height: 4, fill: 'rgba(255,255,255,0.8)' }));
 
       // Traffic light
-      const tlX = cx + vRoadW / 2 + 10;
-      const tlY = crossY - hRoadW / 2 - 30;
-      add(svgEl('rect', {
-        x: tlX, y: tlY, width: 16, height: 40,
-        rx: 4, fill: '#2a2d34',
-      }));
-      add(svgEl('circle', { cx: tlX + 8, cy: tlY + 10, r: 5, fill: '#cc3333' }));
-      add(svgEl('circle', { cx: tlX + 8, cy: tlY + 22, r: 5, fill: '#555' }));
-      add(svgEl('circle', { cx: tlX + 8, cy: tlY + 34, r: 5, fill: '#555' }));
+      const tlX = cx + vW / 2 + 10;
+      const tlY = crossY - hW / 2 - 46;
+      add(svgEl('rect', { x: tlX, y: tlY, width: 18, height: 44, rx: 4, fill: themeVal('#252830', '#c0c5d0') }));
+      add(svgEl('circle', { cx: tlX + 9, cy: tlY + 10, r: 5.5, fill: '#cc3333' }));
+      add(svgEl('circle', { cx: tlX + 9, cy: tlY + 22, r: 5.5, fill: themeVal('#444', '#999') }));
+      add(svgEl('circle', { cx: tlX + 9, cy: tlY + 34, r: 5.5, fill: themeVal('#444', '#999') }));
 
-      // Car
-      const carY = h - 60;
+      // Route
+      const carY = h - 65;
+      const dir = phase.turnDirection;
+      const turnEndX = dir === 'right' ? w - 10 : 10;
+      animatedPath(
+        `M ${cx} ${carY - 18} L ${cx} ${crossY} Q ${cx} ${crossY + 2} ${cx + (dir === 'right' ? vW * 0.6 : -vW * 0.6)} ${crossY} L ${turnEndX} ${crossY}`,
+        '#00C8A0', 5
+      );
+
+      // Small turn arrow
+      const ax = cx + (dir === 'right' ? vW * 0.8 : -vW * 0.8);
+      const arrowD = dir === 'right'
+        ? `M ${ax - 10} ${crossY + 10} L ${ax - 10} ${crossY - 4} Q ${ax - 10} ${crossY - 13} ${ax - 2} ${crossY - 13} L ${ax + 10} ${crossY - 13} M ${ax + 4} ${crossY - 18} L ${ax + 10} ${crossY - 13} L ${ax + 4} ${crossY - 8}`
+        : `M ${ax + 10} ${crossY + 10} L ${ax + 10} ${crossY - 4} Q ${ax + 10} ${crossY - 13} ${ax + 2} ${crossY - 13} L ${ax - 10} ${crossY - 13} M ${ax - 4} ${crossY - 18} L ${ax - 10} ${crossY - 13} L ${ax - 4} ${crossY - 8}`;
+      add(svgEl('path', { d: arrowD, stroke: '#F5A623', 'stroke-width': 2.5, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
+
       drawCar(cx, carY);
-
-      // Route path — straight up then curve
-      let routeD;
-      if (turnDirection === 'right') {
-        const endX = cx + vRoadW / 2 + 60;
-        routeD = `M ${cx} ${carY - 16} L ${cx} ${crossY} Q ${cx} ${crossY - hRoadW * 0.1} ${cx + vRoadW * 0.5} ${crossY} L ${endX} ${crossY}`;
-      } else {
-        const endX = cx - vRoadW / 2 - 60;
-        routeD = `M ${cx} ${carY - 16} L ${cx} ${crossY} Q ${cx} ${crossY - hRoadW * 0.1} ${cx - vRoadW * 0.5} ${crossY} L ${endX} ${crossY}`;
-      }
-      drawRoutePath(routeD, '#00C8A0', 5);
-
-      // Turn arrow indicator at intersection
-      const arrowCX = cx + (turnDirection === 'right' ? vRoadW * 0.3 : -vRoadW * 0.3);
-      const arrowCY = crossY - 10;
-      drawTurnArrowSmall(arrowCX, arrowCY, turnDirection);
     }
 
-    function drawTurnArrowSmall(cx, cy, dir) {
-      const d = dir === 'right'
-        ? `M ${cx - 8} ${cy + 8} L ${cx - 8} ${cy - 2} Q ${cx - 8} ${cy - 10} ${cx} ${cy - 10} L ${cx + 8} ${cy - 10} M ${cx + 4} ${cy - 14} L ${cx + 8} ${cy - 10} L ${cx + 4} ${cy - 6}`
-        : `M ${cx + 8} ${cy + 8} L ${cx + 8} ${cy - 2} Q ${cx + 8} ${cy - 10} ${cx} ${cy - 10} L ${cx - 8} ${cy - 10} M ${cx - 4} ${cy - 14} L ${cx - 8} ${cy - 10} L ${cx - 4} ${cy - 6}`;
-      add(svgEl('path', {
-        d,
-        stroke: '#F5A623',
-        'stroke-width': 2,
-        fill: 'none',
-        'stroke-linecap': 'round',
-        'stroke-linejoin': 'round',
-      }));
-    }
-
-    // ── TURN ICON ────────────────────────────────────────────────────────────────
+    // ── TURN ICON ────────────────────────────────────────────────────────────
     function drawTurnIcon(type) {
-      const container = document.getElementById('turn-icon');
       const ns = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(ns, 'svg');
-      svg.setAttribute('viewBox', '0 0 40 40');
-      svg.setAttribute('width', '40');
-      svg.setAttribute('height', '40');
+      svg.setAttribute('viewBox', '0 0 56 56');
+      svg.setAttribute('width', '56');
+      svg.setAttribute('height', '56');
       svg.setAttribute('fill', 'none');
 
-      const stroke = '#00C8A0';
-      const sw = 2.5;
-      const common = { stroke, 'stroke-width': sw, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
-
-      let d = '';
-      switch (type) {
-        case 'straight':
-          d = 'M 20 34 L 20 10 M 13 17 L 20 10 L 27 17';
-          break;
-        case 'lane-right':
-          d = 'M 12 34 L 12 18 Q 12 10 20 10 L 28 10 M 22 4 L 28 10 L 22 16';
-          break;
-        case 'exit-right':
-          d = 'M 14 34 L 14 14 M 14 20 Q 14 12 22 12 L 32 12 M 26 6 L 32 12 L 26 18';
-          break;
-        case 'turn-right':
-          d = 'M 14 34 L 14 18 Q 14 8 24 8 L 30 8 M 24 2 L 30 8 L 24 14';
-          break;
-      }
+      const defs = {
+        straight:   'M 28 46 L 28 14 M 18 24 L 28 14 L 38 24',
+        'lane-right': 'M 16 46 L 16 28 Q 16 16 26 16 L 40 16 M 32 8 L 40 16 L 32 24',
+        'exit-right': 'M 16 46 L 16 20 M 16 26 Q 16 14 28 14 L 44 14 M 36 6 L 44 14 L 36 22',
+        'turn-right': 'M 18 46 L 18 22 Q 18 10 30 10 L 40 10 M 32 2 L 40 10 L 32 18',
+      };
 
       const path = document.createElementNS(ns, 'path');
-      path.setAttribute('d', d);
-      for (const [k, v] of Object.entries(common)) path.setAttribute(k, v);
+      path.setAttribute('d', defs[type] || defs.straight);
+      path.setAttribute('stroke', '#00C8A0');
+      path.setAttribute('stroke-width', '3');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
       svg.appendChild(path);
+
+      const container = document.getElementById('turn-icon');
       container.innerHTML = '';
       container.appendChild(svg);
     }
 
-    // ── RENDER PHASE ────────────────────────────────────────────────────────────
+    // ── PROGRESS BAR ─────────────────────────────────────────────────────────
+    function updateProgressBar(pct) {
+      document.getElementById('progress-fill').style.height = (pct * 100).toFixed(1) + '%';
+      document.getElementById('progress-car-dot').style.bottom = (pct * 100).toFixed(1) + '%';
+    }
+
+    // ── RENDER ────────────────────────────────────────────────────────────────
     let currentPhase = 0;
 
     function renderPhase(n) {
@@ -682,97 +915,51 @@
       const phase = PHASES[n];
       clearScene();
 
-      // Fade-in animation
       scene.classList.remove('phase-enter');
-      void scene.offsetWidth; // reflow
+      void scene.offsetWidth;
       scene.classList.add('phase-enter');
       scene.addEventListener('animationend', () => scene.classList.remove('phase-enter'), { once: true });
 
       // Header
-      updateHeader(phase);
+      document.getElementById('instruction-text').textContent = phase.instruction;
+      document.getElementById('distance-readout').textContent = phase.distance;
+      document.getElementById('eta-dur').textContent = phase.etaMin;
+      document.getElementById('eta-min').textContent = phase.etaMin;
+      drawTurnIcon(phase.turnIconType);
 
       // Banner
       const banner = document.getElementById('lane-banner');
       if (phase.bannerVisible) {
+        banner.textContent = phase.bannerText;
         banner.style.display = 'block';
-        banner.textContent = phase.bannerText || '● Move to right lane';
-        banner.style.animation = 'none';
-        void banner.offsetWidth;
-        banner.style.animation = 'slideDown 0.3s ease-out';
       } else {
         banner.style.display = 'none';
       }
 
       // Exit sign
-      const exitSign = document.getElementById('exit-sign');
-      exitSign.style.display = phase.showExitLabel ? 'block' : 'none';
+      document.getElementById('exit-sign').style.display = phase.showExitLabel ? 'block' : 'none';
+
+      // Progress bar
+      updateProgressBar(phase.progressPct ?? 0.05);
 
       // Scene
-      if (phase.scene === 'perspective-highway') {
-        const roadInfo = drawPerspectiveRoad(3, {});
-        const w = W(), h = H();
-        const vanishY = h * 0.32;
-        const carYFrac = 0.75;
-        const carY = vanishY + (h - vanishY) * carYFrac;
+      if (phase.scene === 'top-down-highway') renderTopDownHighway(phase);
+      else if (phase.scene === 'schematic-intersection') renderSchematic(phase);
 
-        // Exit ramp
-        if (phase.showExit) {
-          const divergeY = vanishY + (h - vanishY) * 0.4;
-          const rampInfo = drawExitRamp(roadInfo, divergeY);
-        }
-
-        // Route path
-        const laneX = getLaneX(phase.carLane, 3, roadInfo, carYFrac);
-        const vanishX = w * 0.5;
-
-        if (phase.routePath === 'straight') {
-          const d = `M ${laneX} ${carY} L ${vanishX} ${vanishY}`;
-          drawRoutePath(d);
-        } else if (phase.routePath === 'curving-right') {
-          const rightLaneX = getLaneX(2, 3, roadInfo, carYFrac);
-          const midX = getLaneX(1.5, 3, roadInfo, 0.5);
-          const d = `M ${laneX} ${carY} Q ${midX} ${carY * 0.5 + vanishY * 0.5} ${vanishX} ${vanishY}`;
-          drawRoutePath(d);
-        } else if (phase.routePath === 'onto-ramp') {
-          // Path goes into ramp
-          const divergeY = vanishY + (h - vanishY) * 0.4;
-          const t = 0.4;
-          const rightEdgeX = vanishX + (roadInfo.roadBottomRight - vanishX) * t;
-          const endX = W() + 10;
-          const endY = h * 0.8;
-          const d = `M ${laneX} ${carY} L ${rightEdgeX} ${divergeY} Q ${rightEdgeX + (endX - rightEdgeX) * 0.4} ${divergeY + (endY - divergeY) * 0.4} ${endX} ${endY}`;
-          drawRoutePath(d);
-        }
-
-        // Car
-        drawCar(laneX, carY);
-
-      } else if (phase.scene === 'schematic-intersection') {
-        drawSchematicIntersection(phase.turnDirection);
-      }
-
-      // Update phase labels
+      // Phase labels
       document.querySelectorAll('#phase-labels span').forEach((el, i) => {
         el.classList.toggle('active', i === n);
       });
     }
 
-    function updateHeader(phase) {
-      document.getElementById('instruction-text').textContent = phase.instruction;
-      document.getElementById('distance-readout').textContent = phase.distance;
-      document.getElementById('eta-time').textContent = phase.etaTime;
-      drawTurnIcon(phase.turnIconType);
-    }
-
-    // ── SLIDER FILL ─────────────────────────────────────────────────────────────
+    // ── SLIDER ────────────────────────────────────────────────────────────────
     const slider = document.getElementById('phase-slider');
 
     function updateSliderFill(val) {
       const pct = (val / 4) * 100;
-      slider.style.background = `linear-gradient(to right, #00C8A0 ${pct}%, rgba(255,255,255,0.15) ${pct}%)`;
+      slider.style.background = `linear-gradient(to right, #00C8A0 ${pct}%, var(--border-strong) ${pct}%)`;
     }
 
-    // ── EVENT LISTENERS ─────────────────────────────────────────────────────────
     slider.addEventListener('input', e => {
       const val = parseInt(e.target.value);
       renderPhase(val);
@@ -788,11 +975,9 @@
       });
     });
 
-    window.addEventListener('resize', () => {
-      renderPhase(currentPhase);
-    });
+    window.addEventListener('resize', () => renderPhase(currentPhase));
 
-    // ── INIT ────────────────────────────────────────────────────────────────────
+    // ── INIT ──────────────────────────────────────────────────────────────────
     renderPhase(0);
     updateSliderFill(0);
   </script>
