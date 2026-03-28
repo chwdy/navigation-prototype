@@ -501,6 +501,7 @@
         scene: 'intersection',
         turnDirection: 'right',
         progressPct: 0.98,
+        hideProgress: true,
       },
       {
         id: 4,
@@ -510,10 +511,12 @@
         bannerVisible: false,
         etaMin: '1 min',
         scene: 'highway',
-        carLane: 1,
+        carLane: 0,
         routePath: 'straight',
         showExit: false,
-        progressPct: 0.33,  // new segment, 1/3 from bottom
+        progressPct: 0.33,
+        hideProgress: true,
+        singleLane: true,
       },
     ];
 
@@ -551,13 +554,17 @@
     const th = (d, l) => isDark ? d : l;
 
     // ── ROAD GEOMETRY ────────────────────────────────────────────────────────
-    // Road occupies 68% of canvas width so lanes are wide and clear
-    function getRoad() {
+    // Road geometry.
+    // forExit=true: narrower road shifted left so the exit lane is fully visible
+    // from the horizontal center of the canvas.
+    function getRoad(forExit = false, singleLane = false) {
       const w = W(), h = H();
-      const laneCount = 3;
-      const roadW = Math.round(w * 0.68);
-      const laneW  = roadW / laneCount;
-      const roadLeft  = (w - roadW) / 2;
+      const laneCount = singleLane ? 1 : 3;
+      const baseRoadW = Math.round(w * (forExit ? 0.50 : 0.68));
+      const roadW    = singleLane ? Math.round(baseRoadW / 3) : baseRoadW;
+      const laneW    = roadW / laneCount;
+      // forExit: anchor road to left edge so exit lane occupies right half
+      const roadLeft  = forExit ? Math.round(w * 0.05) : Math.round((w - roadW) / 2);
       const roadRight = roadLeft + roadW;
       const shoulder  = 5;
       const laneCenters = Array.from({length: laneCount}, (_, i) => roadLeft + laneW * (i + 0.5));
@@ -565,7 +572,9 @@
     }
 
     // ── DRAW ROAD SURFACE + THICK LANE LINES ─────────────────────────────────
-    function drawRoad(r) {
+    // exitDivY: when set, the right shoulder is drawn only from exitDivY→h (Part 1).
+    // drawExitRamp will draw Part 2 (0→divY) and the fork geometry above.
+    function drawRoad(r, exitDivY = null) {
       const { w, h, laneCount, roadW, laneW, roadLeft, roadRight, shoulder } = r;
       const roadColor  = th('#1c2030', '#8f99aa');
       const offColor   = th('#0a0d14', '#aab2c0');
@@ -576,11 +585,15 @@
 
       // Off-road
       add(svgEl('rect', { x:0, y:0, width:w, height:h, fill:offColor }));
-      // Road surface
-      add(svgEl('rect', { x:roadLeft, y:0, width:roadW, height:h, fill:roadColor }));
-      // Shoulders
+      // Road surface — when there's an exit, only draw below the fork;
+      // drawExitRamp will draw the Y-shaped surface above the fork.
+      const roadTop = exitDivY !== null ? exitDivY : 0;
+      add(svgEl('rect', { x:roadLeft, y:roadTop, width:roadW, height:h - roadTop, fill:roadColor }));
+      // Left shoulder (full height)
       add(svgEl('rect', { x:roadLeft - lineW, y:0, width:lineW, height:h, fill:lineColor }));
-      add(svgEl('rect', { x:roadRight,        y:0, width:lineW, height:h, fill:lineColor }));
+      // Right shoulder — Part 1: from fork down to bottom (or full height when no exit)
+      const rightTop = exitDivY !== null ? exitDivY : 0;
+      add(svgEl('rect', { x:roadRight, y:rightTop, width:lineW, height:h - rightTop, fill:lineColor }));
       // Lane dividers — thick dashed
       for (let i = 1; i < laneCount; i++) {
         const lx = roadLeft + i * laneW;
@@ -618,32 +631,26 @@
     }
 
     function drawLaneRouteRamp(fromX, divY, r) {
-      const { h, laneW, roadRight, shoulder } = r;
-      const fillW  = laneW * 0.82;
-      const carY   = h * 0.72;
-      const drift  = divY * 0.35;
-      const exCX   = roadRight + shoulder + laneW * 0.5;  // center of exit lane
+      const { h, laneW, roadRight } = r;
+      const fillW     = laneW * 0.82;
+      const carY      = h * 0.72;
+      const exitAngle = Math.PI / 6;
+      const tanA      = Math.tan(exitAngle);
+      // Turning point: sin(angle)*0.5*laneW above divY → midway in the exit lane
+      const turnY     = divY - Math.sin(exitAngle) * 0.5 * laneW;
+      const turnX     = roadRight + turnY * tanA;
+      const seg1EndY  = turnY + (carY - turnY) * 0.45;
+      // Follow the exit angle from the turning point to the top
+      const topX      = turnX + turnY * tanA;
 
-      // Seg 1: straight up in rightmost lane toward the fork
-      const seg1EndY = divY + (carY - divY) * 0.45;
-      add(svgEl('rect', {
-        x: fromX - fillW/2, y: seg1EndY,
-        width: fillW, height: carY - seg1EndY,
-        fill: '#00C8A0', opacity: 0.28, rx: 4,
-      }));
-
-      // Seg 2: diagonal from lane 2 to exit lane entrance at fork
       add(svgEl('path', {
-        d: `M ${fromX} ${seg1EndY} L ${exCX} ${divY}`,
-        stroke: '#00C8A0', 'stroke-width': fillW,
-        'stroke-opacity': 0.28, fill: 'none', 'stroke-linecap': 'butt',
-      }));
-
-      // Seg 3: follow shallow exit ramp angle to top-right
-      add(svgEl('path', {
-        d: `M ${exCX} ${divY} L ${exCX + drift} 0`,
-        stroke: '#00C8A0', 'stroke-width': fillW,
-        'stroke-opacity': 0.28, fill: 'none', 'stroke-linecap': 'butt',
+        d: `M ${fromX} ${carY} L ${fromX} ${seg1EndY} L ${turnX} ${turnY} L ${topX} 0`,
+        stroke: '#00C8A0',
+        'stroke-width': fillW,
+        'stroke-opacity': 0.28,
+        fill: 'none',
+        'stroke-linecap': 'butt',
+        'stroke-linejoin': 'miter',
       }));
     }
 
@@ -667,40 +674,57 @@
       }));
     }
 
-    // ── EXIT RAMP — Y-shape, shallow angle ────────────────────────────────────
-    // The exit lane branches from the right side of the main road at a shallow
-    // angle (~20° from vertical), like a real highway off-ramp.
-    // A triangular "gore" area separates the main road from the exit lane.
-    function drawExitRamp(r, divY) {
-      const { w, roadRight, laneW, shoulder } = r;
-      const eStart = roadRight + shoulder;    // outer edge of main road right shoulder
-      const drift  = divY * 0.35;            // horizontal drift by the time ramp reaches y=0
+    // ── EXIT RAMP — angle-based geometry ──────────────────────────────────
+    // angle: exit angle from vertical (radians)
+    // divY:  where the left edge of the exit starts (= top of gore)
+    // forkY: where the right edge of the exit starts = divY + laneW / sin(angle)
+    // Both edges share the same angle, so the exit lane is exactly laneW wide
+    // (perpendicular to the exit direction).
+    function drawExitRamp(r, angle, divY, forkY) {
+      const { w, roadRight, roadLeft, laneW, laneCount } = r;
+      const tanA = Math.tan(angle);
+      const roadColor = th('#1c2030', '#8f99aa');
+      const dashColor = th('rgba(255,255,255,0.45)', 'rgba(255,255,255,0.65)');
+      const lineW = 5;
+      const dashLen = 24, gapLen = 18;
 
-      // Exit lane surface (parallelogram, shallow angle)
-      const bL = eStart,                        bR = Math.min(eStart + laneW, w + 20);
-      const tL = eStart + drift,                tR = Math.min(eStart + laneW + drift, w + 20);
+      // Left edge of exit:  (roadRight, divY)  → (roadRight + divY*tanA,  0)
+      // Right edge of exit: (roadRight, forkY) → (roadRight + forkY*tanA, 0)
+      const exLT_x = roadRight + divY * tanA;
+      const exRT_x = roadRight + forkY * tanA;
+
+      // Road surface above forkY — trapezoid from main road to exit right edge.
       add(svgEl('polygon', {
-        points: `${bL},${divY} ${bR},${divY} ${tR},0 ${tL},0`,
-        fill: th('#1c2030', '#8f99aa'),
+        points: `${roadLeft},0 ${roadLeft},${forkY} ${roadRight},${forkY} ${exRT_x},0`,
+        fill: roadColor,
       }));
 
-      // Gore triangle — off-road color, makes the Y split visible above the fork
+      // Grey gore triangle: straight right edge of main road vs exit left edge
       add(svgEl('polygon', {
-        points: `${eStart},${divY} ${eStart},0 ${tL},0`,
-        fill: th('#0a0d14', '#aab2c0'),
+        points: `${roadRight},${divY} ${roadRight},0 ${exLT_x},0`,
+        fill: th('#5a6270', '#9099a8'),
       }));
 
-      // Gore separator line (left edge of exit lane = right edge of gore)
+      // Re-draw lane dashes above forkY (covered by the road polygon)
+      for (let i = 1; i < laneCount; i++) {
+        const lx = roadLeft + i * laneW;
+        for (let y = 0; y < forkY; y += dashLen + gapLen) {
+          if (y + dashLen > forkY) break;
+          add(svgEl('rect', { x: lx - lineW/2, y, width: lineW, height: dashLen, fill: dashColor }));
+        }
+      }
+
+      // Left edge of exit lane
       add(svgEl('line', {
-        x1: eStart, y1: divY, x2: tL, y2: 0,
+        x1: roadRight, y1: divY, x2: exLT_x, y2: 0,
         stroke: th('rgba(255,255,255,0.65)', 'rgba(255,255,255,0.85)'),
         'stroke-width': 5,
       }));
 
-      // Right edge of exit lane (if it fits in canvas)
-      if (tR < w) {
+      // Right edge of exit lane
+      if (exRT_x < w) {
         add(svgEl('line', {
-          x1: bR, y1: divY, x2: tR, y2: 0,
+          x1: roadRight, y1: forkY, x2: exRT_x, y2: 0,
           stroke: th('rgba(255,255,255,0.55)', 'rgba(255,255,255,0.75)'),
           'stroke-width': 5,
         }));
@@ -709,16 +733,22 @@
 
     // ── RENDER HIGHWAY ────────────────────────────────────────────────────────
     function renderHighway(phase) {
-      const r = getRoad();
+      const r = getRoad(phase.routePath === 'onto-ramp', phase.singleLane);
       const { h, laneW, laneCenters, roadRight, shoulder } = r;
-      drawRoad(r);
 
       const carLane = phase.carLane ?? 1;
       const carX    = laneCenters[carLane];
       const carY    = h * 0.72;
-      const divY    = h * 0.25;  // fork point used by both ramp and route
 
-      if (phase.showExit) drawExitRamp(r, divY);
+      // Exit ramp geometry — derived from angle + divY
+      const exitAngle = Math.PI / 6;                          // 30° from vertical
+      const divY      = h * 0.18;                             // where left edge starts
+      const forkY     = divY + laneW / Math.sin(exitAngle);   // where right edge starts
+
+      // Right shoulder drawn only below forkY
+      drawRoad(r, phase.showExit ? forkY : null);
+
+      if (phase.showExit) drawExitRamp(r, exitAngle, divY, forkY);
 
       if      (phase.routePath === 'straight')      drawLaneRouteStraight(carX, laneW, carY);
       else if (phase.routePath === 'curving-right')  drawLaneRouteCurve(carX, laneCenters[2], laneW, carY, h);
@@ -728,10 +758,10 @@
     }
 
     // ── RENDER INTERSECTION ───────────────────────────────────────────────────
-    // Complex scene: cross intersection + a 45° diagonal exit road branching
-    // off to the upper-right just past the crossing. Driver goes straight
-    // through the cross then bears onto the diagonal — two moves in quick
-    // succession, which is what makes it cognitively demanding.
+    // Cross intersection + 45° diagonal road branching off the vertical road
+    // above the intersection. Uses the same edge-connection pattern as the
+    // exit ramp in renderHighway (screen 3): both edges of the diagonal
+    // originate from the right edge of the vertical road at different Y values.
     function renderIntersection(phase) {
       const w = W(), h = H();
       const cx = w * 0.5;
@@ -743,92 +773,104 @@
       const lc = th('rgba(255,255,255,0.58)','rgba(255,255,255,0.82)');
       const dc = th('rgba(255,255,255,0.4)','rgba(255,255,255,0.62)');
 
+      // Intersection box bounds
+      const intTop    = crossY - hW/2;
+      const intBottom = crossY + hW/2;
+      const intLeft   = cx - vW/2;
+      const intRight  = cx + vW/2;
+
       // ── 1. Off-road background
       add(svgEl('rect', { x:0, y:0, width:w, height:h, fill:offColor }));
 
-      // ── 2. Diagonal exit road (draw first so main roads sit on top cleanly)
-      // Starts from the top-right of the crossing, goes upper-right at 45°.
-      const diagOriginX = cx + vW/2;
-      const diagOriginY = crossY - hW/2;
-      const cos45 = Math.SQRT1_2, sin45 = Math.SQRT1_2;  // 0.7071
-      const diagLen = 350;
-      // Road surface as thick stroke along center-line
-      add(svgEl('line', {
-        x1: diagOriginX, y1: diagOriginY,
-        x2: diagOriginX + diagLen * cos45, y2: diagOriginY - diagLen * sin45,
-        stroke: roadColor, 'stroke-width': vW + lineW * 2, 'stroke-linecap': 'butt',
+      // ── 2. Diagonal road — exit-ramp style: both edges start at intRight
+      const diagAngle = Math.PI / 4;               // 45° from vertical
+      const tanA  = Math.tan(diagAngle);            // = 1
+      const sinA  = Math.sin(diagAngle);
+      const cosA  = Math.cos(diagAngle);
+      const diagW = 50;                             // perpendicular width of diagonal road
+      const divY  = intTop - 75;                    // upper-left edge starts here
+      const forkY = divY + diagW / sinA;            // lower-right edge starts here
+
+      // Endpoint X at y=0 for each edge
+      const exLT_x = intRight + divY  * tanA;      // upper-left edge at y=0
+      const exRT_x = intRight + forkY * tanA;      // lower-right edge at y=0
+
+      // Road surface — trapezoid from fork to top of viewport
+      add(svgEl('polygon', {
+        points: `${intRight},${divY} ${exLT_x},0 ${exRT_x},0 ${intRight},${forkY}`,
+        fill: roadColor,
       }));
-      // Edge lines of diagonal road (perpendicular offset = vW/2)
-      // Perpendicular to (cos45, -sin45) is (sin45, cos45)
-      const pX = sin45, pY = cos45;
-      // Upper-left edge
+
+      // Gore triangle between straight right edge and upper-left diagonal edge
+      add(svgEl('polygon', {
+        points: `${intRight},${divY} ${intRight},0 ${exLT_x},0`,
+        fill: th('#5a6270','#9099a8'),
+      }));
+
+      // Upper-left edge of diagonal (from intRight down to top of viewport)
       add(svgEl('line', {
-        x1: diagOriginX - vW/2*pX, y1: diagOriginY - vW/2*pY,
-        x2: diagOriginX - vW/2*pX + diagLen*cos45, y2: diagOriginY - vW/2*pY - diagLen*sin45,
+        x1: intRight, y1: divY, x2: exLT_x, y2: 0,
         stroke: lc, 'stroke-width': lineW,
       }));
-      // Lower-right edge
-      add(svgEl('line', {
-        x1: diagOriginX + vW/2*pX, y1: diagOriginY + vW/2*pY,
-        x2: diagOriginX + vW/2*pX + diagLen*cos45, y2: diagOriginY + vW/2*pY - diagLen*sin45,
-        stroke: lc, 'stroke-width': lineW,
-      }));
+      // Lower-right edge of diagonal
+      if (exRT_x < w + 50) {
+        add(svgEl('line', {
+          x1: intRight, y1: forkY, x2: exRT_x, y2: 0,
+          stroke: lc, 'stroke-width': lineW,
+        }));
+      }
 
-      // ── 3. Main roads (vertical approach + horizontal cross)
-      add(svgEl('rect', { x:cx-vW/2, y:0, width:vW, height:h, fill:roadColor }));
-      add(svgEl('rect', { x:0, y:crossY-hW/2, width:w, height:hW, fill:roadColor }));
+      // ── 3. Main roads — drawn ON TOP so junction is clean
+      add(svgEl('rect', { x:intLeft, y:0, width:vW, height:h, fill:roadColor }));
+      add(svgEl('rect', { x:0, y:intTop, width:w, height:hW, fill:roadColor }));
 
-      // ── 4. Road edge lines — vertical
-      add(svgEl('rect', { x:cx-vW/2-lineW, y:0, width:lineW, height:h, fill:lc }));
-      add(svgEl('rect', { x:cx+vW/2,       y:0, width:lineW, height:h, fill:lc }));
-      // Road edge lines — horizontal
-      add(svgEl('rect', { x:0, y:crossY-hW/2-lineW, width:w, height:lineW, fill:lc }));
-      add(svgEl('rect', { x:0, y:crossY+hW/2,       width:w, height:lineW, fill:lc }));
+      // ── 4. Road edge lines — gaps at intersection and diagonal fork
+      // Vertical left edge: above and below intersection (gap = intersection box)
+      add(svgEl('rect', { x:intLeft-lineW, y:0, width:lineW, height:intTop, fill:lc }));
+      add(svgEl('rect', { x:intLeft-lineW, y:intBottom+lineW, width:lineW, height:h-intBottom-lineW, fill:lc }));
+      // Vertical right edge below intersection (gap = intersection box)
+      add(svgEl('rect', { x:intRight, y:intBottom+lineW, width:lineW, height:h-intBottom-lineW, fill:lc }));
+      // Vertical right edge above intersection — only up to where diagonal forks
+      add(svgEl('rect', { x:intRight, y:0, width:lineW, height:divY, fill:lc }));
 
-      // ── 5. Center dashes — approach road below intersection
-      for (let y = crossY+hW/2+10; y < h; y += 40)
-        add(svgEl('rect', { x:cx-lineW/2, y, width:lineW, height:22, fill:dc }));
-      // horizontal road dashes
-      for (let x = 0; x < cx-vW/2; x += 40)
-        add(svgEl('rect', { x, y:crossY-lineW/2, width:22, height:lineW, fill:dc }));
-      for (let x = cx+vW/2+10; x < w; x += 40)
-        add(svgEl('rect', { x, y:crossY-lineW/2, width:22, height:lineW, fill:dc }));
+      // Horizontal top edge: left and right of vertical road (gaps at road)
+      add(svgEl('rect', { x:0, y:intTop-lineW, width:intLeft-lineW, height:lineW, fill:lc }));
+      add(svgEl('rect', { x:intRight+lineW, y:intTop-lineW, width:w-intRight-lineW, height:lineW, fill:lc }));
+      // Horizontal bottom edge: left and right of vertical road (gaps at road)
+      add(svgEl('rect', { x:0, y:intBottom, width:intLeft-lineW, height:lineW, fill:lc }));
+      add(svgEl('rect', { x:intRight+lineW, y:intBottom, width:w-intRight-lineW, height:lineW, fill:lc }));
 
-      // ── 6. Stop line + traffic light
-      add(svgEl('rect', { x:cx-vW/2, y:crossY+hW/2+4, width:vW, height:4, fill:'rgba(255,255,255,0.8)' }));
-      const tlX = cx - vW/2 - 28, tlY = crossY - hW/2 - 46;
+      // ── 5. No center dashes on intersection roads (single-lane roads)
+
+      // ── 6. Traffic light (no stop line — keep map clean)
+      const tlX = intLeft - 28, tlY = intTop - 46;
       add(svgEl('rect', { x:tlX, y:tlY, width:18, height:44, rx:4, fill:th('#252830','#c0c5d0') }));
       add(svgEl('circle', { cx:tlX+9, cy:tlY+10, r:5.5, fill:'#cc3333' }));
       add(svgEl('circle', { cx:tlX+9, cy:tlY+22, r:5.5, fill:th('#444','#999') }));
       add(svgEl('circle', { cx:tlX+9, cy:tlY+34, r:5.5, fill:th('#444','#999') }));
 
-      // ── 7. Route fill
+      // ── 7. Route fill — single divert at the fork point, then follow diagonal
       const carY = h - 70;
       const fillW = vW * 0.82;
+      // Turn point: at the top edge of the horizontal road (where the turn visually happens)
+      const turnY   = intTop-7;
+      const turnX   = cx;
+      // Follow the 45° angle from the turning point towards top-right
+      const topX    = turnX + turnY * tanA;
+      const topY    = 0;
 
-      // Seg A: straight approach from car to intersection
-      add(svgEl('rect', {
-        x: cx - fillW/2, y: crossY + hW/2,
-        width: fillW, height: carY - crossY - hW/2,
-        fill: '#00C8A0', opacity: 0.28, rx: 4,
-      }));
-      // Seg B: straight through intersection box
-      add(svgEl('rect', {
-        x: cx - fillW/2, y: crossY - hW/2,
-        width: fillW, height: hW,
-        fill: '#00C8A0', opacity: 0.28,
-      }));
-      // Seg C: diagonal fill following the 45° exit road
-      add(svgEl('line', {
-        x1: diagOriginX, y1: diagOriginY,
-        x2: diagOriginX + diagLen * cos45 * 0.65, y2: diagOriginY - diagLen * sin45 * 0.65,
-        stroke: '#00C8A0', 'stroke-width': fillW,
-        'stroke-opacity': 0.28, 'stroke-linecap': 'butt',
+      add(svgEl('path', {
+        d: `M ${cx} ${carY} L ${turnX} ${turnY} L ${topX} ${topY}`,
+        stroke: '#00C8A0',
+        'stroke-width': fillW,
+        'stroke-opacity': 0.28,
+        fill: 'none',
+        'stroke-linecap': 'butt',
+        'stroke-linejoin': 'miter',
       }));
 
       // ── 8. Small turn arrow indicating the 45° exit
-      const arrowX = diagOriginX + 30, arrowY = diagOriginY - 30;
-      // Upward-right arrowhead at 45°
+      const arrowX = turnX + 50 * cosA, arrowY = turnY - 50 * sinA;
       add(svgEl('path', {
         d: `M ${arrowX - 10} ${arrowY + 10} L ${arrowX + 10} ${arrowY - 10} M ${arrowX + 2} ${arrowY - 10} L ${arrowX + 10} ${arrowY - 10} L ${arrowX + 10} ${arrowY - 2}`,
         stroke: '#F5A623', 'stroke-width': 2.5, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
@@ -900,7 +942,9 @@
       else                     { banner.style.display = 'none'; }
 
       document.getElementById('exit-sign').style.display = phase.showExitLabel ? 'block' : 'none';
-      updateProgressBar(phase.progressPct ?? 0.05);
+      const progressPanel = document.getElementById('progress-bar-panel');
+      if (phase.hideProgress) { progressPanel.style.display = 'none'; }
+      else { progressPanel.style.display = ''; updateProgressBar(phase.progressPct ?? 0.05); }
 
       if      (phase.scene === 'highway')      renderHighway(phase);
       else if (phase.scene === 'intersection') renderIntersection(phase);
