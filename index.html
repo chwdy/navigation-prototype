@@ -227,21 +227,31 @@
     }
 
     #progress-track {
-      width: 4px;
+      width: 8px;
       flex: 1;
-      background: var(--border-strong);
-      border-radius: 2px;
+      background: transparent;
+      border-radius: 4px;
       position: relative;
       margin: 0 auto;
       overflow: visible;
-      transition: background 0.3s;
     }
 
+    /* Distance ahead (top) — teal, the important part */
+    #progress-ahead {
+      position: absolute;
+      top: 0; left: 0; width: 100%;
+      background: var(--accent);
+      border-radius: 4px 4px 0 0;
+      opacity: 0.85;
+      transition: height 0.5s ease-out;
+    }
+
+    /* Distance behind (bottom) — grey, already passed */
     #progress-fill {
       position: absolute;
       bottom: 0; left: 0; width: 100%;
-      background: linear-gradient(to top, var(--accent), rgba(0,200,160,0.2));
-      border-radius: 2px;
+      background: var(--border-strong);
+      border-radius: 0 0 4px 4px;
       transition: height 0.5s ease-out;
     }
 
@@ -249,12 +259,13 @@
       position: absolute;
       left: 50%;
       transform: translate(-50%, 50%);
-      width: 11px; height: 11px;
+      width: 13px; height: 13px;
       background: #fff;
       border: 2.5px solid var(--accent);
       border-radius: 50%;
-      box-shadow: 0 0 7px rgba(0,200,160,0.7);
+      box-shadow: 0 0 8px rgba(0,200,160,0.8);
       transition: bottom 0.5s ease-out;
+      z-index: 2;
     }
 
     /* "YOU" label — muted */
@@ -428,6 +439,7 @@
         <div id="progress-exit-label">1A</div>
         <div id="progress-track-wrap">
           <div id="progress-track">
+            <div id="progress-ahead"></div>
             <div id="progress-fill"></div>
             <div id="progress-car-dot"></div>
           </div>
@@ -615,94 +627,39 @@
     }
 
     // ── LANE ROUTE FILL ──────────────────────────────────────────────────────
-    // Fills ~82% of a lane with a semi-transparent teal highlight,
-    // then draws a bright center line on top — makes the intended lane unmissable
+    // Fills ~82% of lane width with a semi-transparent teal block — no center line
     function drawLaneRouteStraight(centerX, laneW, carY) {
       const fillW = laneW * 0.82;
-
-      // Background fill (wide, low opacity)
-      const fill = svgEl('rect', {
+      add(svgEl('rect', {
         x: centerX - fillW/2, y: 0,
         width: fillW, height: carY,
-        fill: '#00C8A0',
-        opacity: 0.22,
-        rx: 6,
-      });
-      add(fill);
-
-      // Bright center direction line
-      const line = svgEl('line', {
-        x1: centerX, y1: carY - 20,
-        x2: centerX, y2: 0,
-        stroke: '#00C8A0',
-        'stroke-width': 4,
-        'stroke-linecap': 'round',
-      });
-      line.style.strokeDasharray = 600;
-      line.style.strokeDashoffset = 600;
-      line.style.transition = 'stroke-dashoffset 0.5s ease-out';
-      add(line);
-      requestAnimationFrame(() => requestAnimationFrame(() => { line.style.strokeDashoffset = 0; }));
+        fill: '#00C8A0', opacity: 0.28, rx: 6,
+      }));
     }
 
     function drawLaneRouteCurve(fromX, toX, laneW, carY, h) {
-      // Wide background path
       const midY = carY * 0.48;
-      const bgPath = svgEl('path', {
+      add(svgEl('path', {
         d: `M ${fromX} ${carY} Q ${fromX} ${midY + 30} ${toX} ${midY} L ${toX} 0`,
         stroke: '#00C8A0',
         'stroke-width': laneW * 0.82,
-        'stroke-opacity': 0.22,
+        'stroke-opacity': 0.28,
         fill: 'none',
         'stroke-linecap': 'butt',
-      });
-      add(bgPath);
-
-      // Bright center line
-      const line = svgEl('path', {
-        d: `M ${fromX} ${carY} Q ${fromX} ${midY + 30} ${toX} ${midY} L ${toX} 0`,
-        stroke: '#00C8A0',
-        'stroke-width': 4,
-        fill: 'none',
-        'stroke-linecap': 'round',
-        'stroke-linejoin': 'round',
-      });
-      const len = 700;
-      line.style.strokeDasharray = len;
-      line.style.strokeDashoffset = len;
-      line.style.transition = 'stroke-dashoffset 0.5s ease-out';
-      add(line);
-      requestAnimationFrame(() => requestAnimationFrame(() => { line.style.strokeDashoffset = 0; }));
+      }));
     }
 
     function drawLaneRouteRamp(fromX, rampStartY, r) {
       const endX = r.w - 4, endY = r.h * 0.04;
       const rampX = r.roadRight + r.shoulder;
-
-      const bgPath = svgEl('path', {
+      add(svgEl('path', {
         d: `M ${fromX} ${r.h * 0.72} L ${fromX} ${rampStartY} Q ${rampX + 25} ${rampStartY - 12} ${endX} ${endY}`,
         stroke: '#00C8A0',
         'stroke-width': r.laneW * 0.82,
-        'stroke-opacity': 0.22,
+        'stroke-opacity': 0.28,
         fill: 'none',
         'stroke-linecap': 'butt',
-      });
-      add(bgPath);
-
-      const line = svgEl('path', {
-        d: `M ${fromX} ${r.h * 0.72} L ${fromX} ${rampStartY} Q ${rampX + 25} ${rampStartY - 12} ${endX} ${endY}`,
-        stroke: '#00C8A0',
-        'stroke-width': 4,
-        fill: 'none',
-        'stroke-linecap': 'round',
-        'stroke-linejoin': 'round',
-      });
-      const len = 800;
-      line.style.strokeDasharray = len;
-      line.style.strokeDashoffset = len;
-      line.style.transition = 'stroke-dashoffset 0.5s ease-out';
-      add(line);
-      requestAnimationFrame(() => requestAnimationFrame(() => { line.style.strokeDashoffset = 0; }));
+      }));
     }
 
     // ── CAR ───────────────────────────────────────────────────────────────────
@@ -813,15 +770,6 @@
         add(svgEl('rect', { x:0, y:horizFillY, width:cx, height:horizFillH, fill:'#00C8A0', opacity:0.22, rx:4 }));
       }
 
-      // Center line
-      const turnD = `M ${cx} ${carY - 20} L ${cx} ${crossY} Q ${cx} ${crossY + 2} ${cx + (dir==='right'? vW*0.55 : -vW*0.55)} ${crossY} L ${turnEndX} ${crossY}`;
-      const tl = svgEl('path', { d:turnD, stroke:'#00C8A0', 'stroke-width':4, fill:'none', 'stroke-linecap':'round', 'stroke-linejoin':'round' });
-      const len = 700;
-      tl.style.strokeDasharray = len; tl.style.strokeDashoffset = len;
-      tl.style.transition = 'stroke-dashoffset 0.5s ease-out';
-      add(tl);
-      requestAnimationFrame(() => requestAnimationFrame(() => { tl.style.strokeDashoffset = 0; }));
-
       // Turn arrow chevron
       const ax = cx + (dir==='right' ? vW*0.9 : -vW*0.9);
       const arrowD = dir === 'right'
@@ -859,9 +807,15 @@
     }
 
     // ── PROGRESS BAR ─────────────────────────────────────────────────────────
+    // pct = fraction of distance already traveled toward exit (0 = just started, 1 = at exit)
+    // ahead (teal, top)  = 1 - pct
+    // behind (grey, bottom) = pct
     function updateProgressBar(pct) {
-      document.getElementById('progress-fill').style.height    = (pct * 100).toFixed(1) + '%';
-      document.getElementById('progress-car-dot').style.bottom = (pct * 100).toFixed(1) + '%';
+      const behindPct = (pct * 100).toFixed(1) + '%';
+      const aheadPct  = ((1 - pct) * 100).toFixed(1) + '%';
+      document.getElementById('progress-fill').style.height    = behindPct;
+      document.getElementById('progress-ahead').style.height   = aheadPct;
+      document.getElementById('progress-car-dot').style.bottom = behindPct;
     }
 
     // ── RENDER ────────────────────────────────────────────────────────────────
