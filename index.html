@@ -493,7 +493,7 @@
       },
       {
         id: 3,
-        instruction: 'Turn right',
+        instruction: 'Turn right at the \u2461 exit',
         distance: '200 ft',
         turnIconType: 'turn-right',
         bannerVisible: false,
@@ -605,12 +605,14 @@
 
     // ── LANE ROUTE FILL ──────────────────────────────────────────────────────
     // Fills ~82% of lane width with a semi-transparent teal block — no center line
-    function drawLaneRouteStraight(centerX, laneW, carY) {
+    function drawLaneRouteStraight(centerX, laneW, carY, routeOpacity, routeColor) {
+      routeOpacity = routeOpacity ?? 0.28;
+      routeColor   = routeColor   ?? '#00C8A0';
       const fillW = laneW * 0.82;
       add(svgEl('rect', {
         x: centerX - fillW/2, y: 0,
         width: fillW, height: carY,
-        fill: '#00C8A0', opacity: 0.28, rx: 6,
+        fill: routeColor, opacity: routeOpacity, rx: 6,
       }));
     }
 
@@ -645,9 +647,9 @@
 
       add(svgEl('path', {
         d: `M ${fromX} ${carY} L ${fromX} ${seg1EndY} L ${turnX} ${turnY} L ${topX} 0`,
-        stroke: '#00C8A0',
+        stroke: '#00FFB4',
         'stroke-width': fillW,
-        'stroke-opacity': 0.28,
+        'stroke-opacity': 0.88,
         fill: 'none',
         'stroke-linecap': 'butt',
         'stroke-linejoin': 'miter',
@@ -731,6 +733,84 @@
       }
     }
 
+    // ── URBAN ENVIRONMENT (screen 5 only) ────────────────────────────────────
+    function drawUrbanEnvironment(r) {
+      const { w, h, roadLeft, roadRight } = r;
+      const gap    = 14;                        // clear space between building and road shoulder
+      const lW     = roadLeft - gap;            // width of left strip
+      const rStart = roadRight + gap;           // left edge of right strip
+      const rW     = w - rStart;               // width of right strip
+
+      const bc = [
+        th('#252a35','#c2c8d4'),
+        th('#1e2230','#babfc9'),
+        th('#2c3040','#d0d5de'),
+        th('#232730','#c8cdd8'),
+      ];
+      const winLit = th('rgba(255,215,100,0.65)','rgba(200,230,255,0.85)');
+      const winOff = th('rgba(55,60,78,0.90)','rgba(175,180,192,0.90)');
+
+      // Buildings: [side, yFrac, hFrac, wFrac, colorIdx]
+      const bldgs = [
+        ['L', 0.27, 0.18, 1.00, 2],
+        ['L', 0.49, 0.20, 0.90, 1],
+        ['L', 0.73, 0.17, 1.00, 3],
+        ['L', 0.93, 0.07, 0.95, 0],
+        ['R', 0.04, 0.19, 1.00, 1],
+        ['R', 0.52, 0.19, 1.00, 0],
+        ['R', 0.75, 0.17, 0.95, 2],
+      ];
+
+      // Window cell size — 2× the original
+      const wW = 10, wH = 8, gX = 14, gY = 12;
+
+      for (const [side, yf, hf, wf, ci] of bldgs) {
+        const sW  = side === 'L' ? lW : rW;
+        const bx  = side === 'L' ? 0 : rStart;
+        const by  = h * yf, bw = sW * wf, bh = h * hf;
+        add(svgEl('rect', { x: bx, y: by, width: bw, height: bh, fill: bc[ci], rx: 1 }));
+
+        // Window grid — compute column/row count then center the whole grid
+        const cols = Math.min(3, Math.max(1, Math.floor((bw - wW) / (wW + gX)) + 1));
+        const rows = Math.min(4, Math.max(1, Math.floor((bh - wH) / (wH + gY)) + 1));
+        const gridW = cols * wW + (cols - 1) * gX;
+        const gridH = rows * wH + (rows - 1) * gY;
+        const startX = bx + (bw - gridW) / 2;
+        const startY = by + (bh - gridH) / 2;
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            const lit = (row * 3 + col) % 3 !== 1;
+            add(svgEl('rect', {
+              x: startX + col * (wW + gX),
+              y: startY + row * (wH + gY),
+              width: wW, height: wH,
+              fill: lit ? winLit : winOff, rx: 1,
+            }));
+          }
+        }
+      }
+
+      // POI pins — 2× size (pr=14)
+      const pins = [
+        ['R', 0.5, 0.12, '#F5A623'],
+        ['L', 0.5, 0.37, '#E84040'],
+        ['R', 0.5, 0.59, '#00C8A0'],
+        ['L', 0.5, 0.78, '#F5A623'],
+      ];
+      for (const [side, xf, yf, color] of pins) {
+        const sW = side === 'L' ? lW : rW;
+        const px = side === 'L' ? xf * lW : rStart + xf * sW;
+        const py = h * yf;
+        const pr = 14;
+        add(svgEl('circle', { cx: px, cy: py, r: pr, fill: color }));
+        add(svgEl('polygon', {
+          points: `${px - pr * 0.55},${py + pr * 0.45} ${px + pr * 0.55},${py + pr * 0.45} ${px},${py + pr * 1.85}`,
+          fill: color,
+        }));
+        add(svgEl('circle', { cx: px, cy: py, r: pr * 0.38, fill: '#fff', opacity: 0.9 }));
+      }
+    }
+
     // ── RENDER HIGHWAY ────────────────────────────────────────────────────────
     function renderHighway(phase) {
       const r = getRoad(phase.routePath === 'onto-ramp', phase.singleLane);
@@ -748,9 +828,14 @@
       // Right shoulder drawn only below forkY
       drawRoad(r, phase.showExit ? forkY : null);
 
+      if (phase.id === 4) drawUrbanEnvironment(r);
+
       if (phase.showExit) drawExitRamp(r, exitAngle, divY, forkY);
 
-      if      (phase.routePath === 'straight')      drawLaneRouteStraight(carX, laneW, carY);
+      const bright = phase.id === 4;
+      const rOpacity = bright ? 0.88 : 0.28;
+      const rColor   = bright ? '#00FFB4' : '#00C8A0';
+      if      (phase.routePath === 'straight')      drawLaneRouteStraight(carX, laneW, carY, rOpacity, rColor);
       else if (phase.routePath === 'curving-right')  drawLaneRouteCurve(carX, laneCenters[2], laneW, carY, h);
       else if (phase.routePath === 'onto-ramp')      drawLaneRouteRamp(carX, divY, r);
 
@@ -861,9 +946,9 @@
 
       add(svgEl('path', {
         d: `M ${cx} ${carY} L ${turnX} ${turnY} L ${topX} ${topY}`,
-        stroke: '#00C8A0',
+        stroke: '#00FFB4',
         'stroke-width': fillW,
-        'stroke-opacity': 0.28,
+        'stroke-opacity': 0.88,
         fill: 'none',
         'stroke-linecap': 'butt',
         'stroke-linejoin': 'miter',
@@ -875,6 +960,29 @@
         d: `M ${arrowX - 10} ${arrowY + 10} L ${arrowX + 10} ${arrowY - 10} M ${arrowX + 2} ${arrowY - 10} L ${arrowX + 10} ${arrowY - 10} L ${arrowX + 10} ${arrowY - 2}`,
         stroke: '#F5A623', 'stroke-width': 2.5, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
       }));
+
+      // ── 9. Circled road labels
+      // Road ①: right turn (horizontal road to the right of intersection)
+      const r1x = intRight + 46, r1y = crossY;
+      // Road ②: diagonal exit (center of diagonal road partway up)
+      const diagMidY = divY * 0.52;
+      const r2x = intRight + diagMidY * tanA + diagW * cosA * 0.5 + 4, r2y = diagMidY;
+      function addRoadLabel(x, y, num) {
+        const R = 13;
+        add(svgEl('circle', { cx: x, cy: y, r: R, fill: '#ffffff', opacity: 0.92 }));
+        add(svgEl('circle', { cx: x, cy: y, r: R, fill: 'none', stroke: '#222', 'stroke-width': 1.5 }));
+        const t = document.createElementNS(NS, 'text');
+        t.setAttribute('x', x); t.setAttribute('y', y + 5);
+        t.setAttribute('text-anchor', 'middle');
+        t.setAttribute('fill', '#111');
+        t.setAttribute('font-size', '14');
+        t.setAttribute('font-weight', '700');
+        t.setAttribute('font-family', 'Inter, sans-serif');
+        t.textContent = String(num);
+        add(t);
+      }
+      addRoadLabel(r1x, r1y, 1);
+      addRoadLabel(r2x, r2y, 2);
 
       drawCar(cx, carY);
     }
